@@ -24,6 +24,12 @@ class ExperimentConfig:
 
 def set_global_seed(seed: int) -> None:
     np.random.seed(seed)
+    try:
+        import torch
+
+        torch.manual_seed(seed)
+    except ImportError:
+        pass
 
 
 def write_run_metadata(out_dir: Path, config: ExperimentConfig, *, synthesized: bool) -> None:

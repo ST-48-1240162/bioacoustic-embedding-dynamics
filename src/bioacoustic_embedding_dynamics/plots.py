@@ -79,6 +79,8 @@ def save_trajectory_path(
         ax.set_title("Embedding-space trajectory (binned centroids)")
     else:
         states = np.asarray(states)
+        if len(states) != len(x):
+            raise ValueError("states length must match centroids")
         for s in np.unique(states):
             mask = states == s
             ax.scatter(x[mask], y[mask], s=36, zorder=2, label=f"HMM {int(s)}")
@@ -105,21 +107,29 @@ def save_hmm_states(binned: pd.DataFrame, states: np.ndarray, out: Path) -> None
 
 
 def save_hmm_compare(
-    binned: pd.DataFrame,
+    embed_binned: pd.DataFrame,
     embed_states: np.ndarray,
+    activity_binned: pd.DataFrame,
     activity_states: np.ndarray,
     out: Path,
 ) -> None:
-    t = binned["t_center_s"].to_numpy() / 60.0
+    embed_states = np.asarray(embed_states)
+    activity_states = np.asarray(activity_states)
+    if len(embed_states) != len(embed_binned):
+        raise ValueError("embed_states length must match embed_binned")
+    if len(activity_states) != len(activity_binned):
+        raise ValueError("activity_states length must match activity_binned")
     fig, axes = plt.subplots(2, 1, figsize=(10, 5.2), sharex=True)
-    for ax, states, title in (
-        (axes[0], embed_states, "HMM on embedding centroids (PC1/PC2)"),
-        (axes[1], activity_states, "HMM on activity (rate, richness, confidence)"),
-    ):
-        ax.step(t, states, where="mid", lw=1.5)
-        ax.set_ylabel("state")
-        ax.set_title(title)
-        ax.set_yticks(sorted(np.unique(states)))
+    t_emb = embed_binned["t_center_s"].to_numpy() / 60.0
+    t_act = activity_binned["t_center_s"].to_numpy() / 60.0
+    axes[0].step(t_emb, embed_states, where="mid", lw=1.5)
+    axes[0].set_ylabel("state")
+    axes[0].set_title("HMM on embedding centroids (PC1/PC2)")
+    axes[0].set_yticks(sorted(np.unique(embed_states)))
+    axes[1].step(t_act, activity_states, where="mid", lw=1.5)
+    axes[1].set_ylabel("state")
+    axes[1].set_title("HMM on activity (rate, richness, confidence)")
+    axes[1].set_yticks(sorted(np.unique(activity_states)))
     axes[1].set_xlabel("Time (minutes)")
     fig.tight_layout()
     fig.savefig(out, dpi=150)
@@ -136,6 +146,8 @@ def save_shuffle_null(
     out: Path,
 ) -> None:
     """Time-shuffle control: embedding PC1 change-points and HMM should collapse."""
+    if len(orig_states) != len(original) or len(shuf_states) != len(shuffled):
+        raise ValueError("HMM state length must match the corresponding binned frame")
     fig, axes = plt.subplots(2, 2, figsize=(11, 6.2), sharex="col")
     panels = (
         (axes[0, 0], original, orig_cps, "PC1 (original)", "pca_x"),

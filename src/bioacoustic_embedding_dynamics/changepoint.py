@@ -8,12 +8,13 @@ import ruptures as rpt
 
 
 def _pelt_times(binned: pd.DataFrame, column: str, pen: float) -> list[float]:
-    y = binned[column].to_numpy(dtype=np.float64).reshape(-1, 1)
+    frame = binned.dropna(subset=[column])
+    y = frame[column].to_numpy(dtype=np.float64).reshape(-1, 1)
     if len(y) < 4:
         return []
     algo = rpt.Pelt(model="rbf").fit(y)
     bkpts = algo.predict(pen=pen)
-    times = binned["t_center_s"].to_numpy()
+    times = frame["t_center_s"].to_numpy()
     out: list[float] = []
     for b in bkpts[:-1]:
         idx = min(int(b) - 1, len(times) - 1)

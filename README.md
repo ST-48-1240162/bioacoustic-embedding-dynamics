@@ -61,7 +61,7 @@ Aliases: `scientific_name`, `score`, `window_start_s`. If `embedding` is missing
 |------|------------|
 | `pca_species.png`, `umap_species.png` | Embedding geometry by species |
 | `trajectory_pca.png` | Binned centroid path, colored by embedding HMM state |
-| `changepoints.png` | Activity-rate change-points |
+| `changepoints.png` | Activity-rate change-points (empty bins count as rate 0) |
 | `trajectory_changepoints.png` | Trajectory (PC1) change-points |
 | `hmm_regimes.png` | Embedding HMM vs activity HMM |
 | `shuffle_null.png` | Time-shuffle control (PC1 change-points and embedding HMM) |

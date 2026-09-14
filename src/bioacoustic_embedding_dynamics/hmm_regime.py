@@ -60,3 +60,10 @@ def fit_regime_hmm(
     except ValueError:
         return None, np.zeros(n, dtype=np.int32)
     return model, states
+
+
+def n_switches(states: np.ndarray) -> int:
+    s = np.asarray(states)
+    if s.size < 2:
+        return 0
+    return int(np.sum(s[1:] != s[:-1]))

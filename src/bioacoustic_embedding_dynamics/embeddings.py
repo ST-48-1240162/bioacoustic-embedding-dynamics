@@ -65,11 +65,14 @@ def embedding_matrix(
     seed: int = 42,
 ) -> tuple[np.ndarray, bool]:
     """Stack per-detection embeddings; synthesize with PyTorch if column absent."""
-    if "embedding" in df.columns and df["embedding"].notna().any():
+    if "embedding" in df.columns:
         vecs = [parse_embedding(v) for v in df["embedding"]]
-        if all(v is not None for v in vecs):
+        ok = [v is not None for v in vecs]
+        if all(ok):
             X = np.stack(vecs).astype(np.float32)
             return X, False
+        if any(ok):
+            raise ValueError("manifest mixes rows with and without usable embeddings")
 
     t0, t1 = df["start_s"].min(), df["start_s"].max()
     duration = float(t1 - t0) if t1 > t0 else 1.0
