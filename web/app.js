@@ -45,7 +45,7 @@ const COPY = {
     next: "next",
     fig_label: "reports/",
     fig_h: "Output figures",
-    fig_note: "PNGs from Colab test runs. Demo, Route B, or Route A. shuffle_null.png is missing from this set.",
+    fig_note: "PNGs from Colab test runs. Demo, Route B, or Route A. shuffle_null.png is on Route A only.",
     fig_missing: "This set has no PNG for that file. A current Run all still writes it.",
     runs: [
       { id: "demo", label: "Demo" },
@@ -206,14 +206,23 @@ function generate() {
   return { points, bins, shufBins, species };
 }
 
-const HAS_PNG = new Set([
+const BASE_PNG = [
   "pca_species.png",
   "umap_species.png",
   "trajectory_pca.png",
   "changepoints.png",
   "trajectory_changepoints.png",
   "hmm_regimes.png",
-]);
+];
+const RUN_PNG = {
+  demo: new Set(BASE_PNG),
+  bmz: new Set(BASE_PNG),
+  bacpipe: new Set([...BASE_PNG, "shuffle_null.png"]),
+};
+
+function hasPng(run, figId) {
+  return RUN_PNG[run]?.has(figId) ?? false;
+}
 const STEP_FIG = { 2: 0, 3: 2, 4: 3, 5: 5, 6: 6 };
 
 const DATA = generate();
@@ -447,7 +456,7 @@ function renderCopy() {
   const img = document.getElementById("fig-img");
   const frame = document.getElementById("fig-frame");
   const miss = document.getElementById("fig-missing");
-  if (HAS_PNG.has(chosen.id)) {
+  if (hasPng(runId, chosen.id)) {
     img.src = `./reports/${runId}/${chosen.id}`;
     img.alt = chosen.title;
     frame.classList.remove("is-empty");

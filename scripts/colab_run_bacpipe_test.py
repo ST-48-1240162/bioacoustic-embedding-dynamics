@@ -13,6 +13,7 @@ import re
 import subprocess
 import sys
 import tarfile
+import threading
 from pathlib import Path
 
 ROOT = Path("/content/bioacoustic-embedding-dynamics")
@@ -60,7 +61,21 @@ SKIP_PIP = {
 
 def run(cmd: list[str], *, timeout: int = 3600, cwd: Path | None = None) -> None:
     print("+", " ".join(cmd), flush=True)
-    subprocess.check_call(cmd, timeout=timeout, cwd=str(cwd) if cwd else None)
+    stop = threading.Event()
+
+    def heartbeat() -> None:
+        tick = 0
+        while not stop.wait(25):
+            tick += 25
+            print(f"[still running {tick}s]", flush=True)
+
+    thread = threading.Thread(target=heartbeat, daemon=True)
+    thread.start()
+    try:
+        subprocess.check_call(cmd, timeout=timeout, cwd=str(cwd) if cwd else None)
+    finally:
+        stop.set()
+        thread.join(timeout=1)
 
 
 def extract_project() -> None:

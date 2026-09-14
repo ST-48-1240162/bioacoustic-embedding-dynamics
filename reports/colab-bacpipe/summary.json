@@ -13,12 +13,19 @@
     "separation_ratio": 1.044
   },
   "trajectory": {
-    "path_length": 11.8031,
-    "mean_step_velocity": 11.8031,
-    "max_step_velocity": 11.8031,
+    "path_length": 12.2117,
+    "mean_step_velocity": 12.2117,
+    "max_step_velocity": 12.2117,
     "turning_angle_mean_deg": 0.0
   },
   "changepoints_min": [],
   "trajectory_changepoints_min": [],
-  "hmm_n_states": 2
+  "shuffle_trajectory_changepoints_min": [],
+  "hmm_n_states": 1,
+  "hmm_activity_n_states": 1,
+  "hmm_n_switches": 0,
+  "shuffle_hmm_n_switches": 0,
+  "n_bins": 2,
+  "n_occupied_bins": 2,
+  "weighted_centroids": true
 }
