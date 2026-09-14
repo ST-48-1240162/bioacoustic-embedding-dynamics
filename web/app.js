@@ -129,7 +129,7 @@ const COPY = {
       },
     ],
     walk_label: "pipeline",
-    keys: "Left and right arrows change the step. The canvas is a cartoon per step (trajectory = path with arrows; HMM = colored states plus two timeline ribbons). It is not the PNG Colab exports.",
+    keys: "Left and right arrows change the step. The canvas is a cartoon per step (vectors = timeline to 1024-d; geometry = PCA vs UMAP split). It is not the PNG Colab exports.",
     prev: "prev",
     next: "next",
     fig_label: "reports/",
@@ -250,12 +250,17 @@ function generate() {
     const pool = Object.keys(centers[regime]);
     const sp = pool[Math.floor(rng() * pool.length)];
     const c = centers[regime][sp];
+    const x = c[0] + (rng() - 0.5) * 0.11;
+    const y = c[1] + (rng() - 0.5) * 0.11;
+    const umapNudge = { A: [0, -0.06], B: [0.07, 0.04], C: [-0.05, 0.08], D: [0.06, -0.05] }[sp] || [0, 0];
     points.push({
       t,
       regime,
       sp,
-      x: c[0] + (rng() - 0.5) * 0.11,
-      y: c[1] + (rng() - 0.5) * 0.11,
+      x,
+      y,
+      umapX: Math.min(0.94, Math.max(0.06, x + umapNudge[0] + 0.06 * Math.sin(t * 13))),
+      umapY: Math.min(0.94, Math.max(0.06, y + umapNudge[1] + 0.05 * Math.cos(t * 10))),
       conf: 0.55 + rng() * 0.4,
     });
   }
@@ -567,17 +572,74 @@ function draw() {
   }
 
   if (step === 1) {
-    setVizLabels(true, "\\mathrm{PC2}", "\\mathrm{PC1}");
-    drawScatter(0.85);
+    setVizLabels(true, null, "t");
+    const laneY = h * 0.26;
+    const hi = Math.floor(DATA.points.length * 0.45);
+    DATA.points.forEach((p, i) => {
+      ctx.fillStyle = cssColor(SPECIES_COLOR[p.sp]);
+      ctx.globalAlpha = i === hi ? 1 : 0.32;
+      ctx.fillRect(pad + p.t * plotW, laneY, 3, 34);
+    });
+    ctx.globalAlpha = 1;
+    const hp = DATA.points[hi];
+    const hx = pad + hp.t * plotW + 1;
+    const boxY = h * 0.5;
+    ctx.strokeStyle = faint;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(hx, laneY + 36);
+    ctx.lineTo(hx, boxY - 6);
+    ctx.stroke();
+    ctx.strokeRect(hx - 30, boxY, 60, 40);
+    ctx.fillStyle = ink;
+    ctx.font = "600 11px Manrope, system-ui, sans-serif";
+    ctx.fillText("x_i", hx - 8, boxY + 16);
     ctx.fillStyle = faint;
+    ctx.font = "10px Manrope, system-ui, sans-serif";
+    ctx.fillText("1024-d", hx - 14, boxY + 30);
     ctx.font = "11px Manrope, system-ui, sans-serif";
-    ctx.fillText("BirdNET attaches a 1024-d vector to each detection (cartoon PC view)", pad, h - 10);
+    ctx.fillText("one BirdNET window -> embedding column in JSONL", pad, h - 10);
     return;
   }
 
   if (step === 2) {
-    setVizLabels(true, "\\mathrm{PC2}", "\\mathrm{PC1}");
-    drawScatter(0.8);
+    setVizLabels(false, null, null);
+    const mid = pad + plotW * 0.5;
+    const halfW = plotW * 0.46;
+    const sxPca = (x) => pad + x * halfW;
+    const sxU = (x) => mid + 10 + x * halfW;
+    const plotTop = pad;
+    const plotBottom = h - 36;
+    const syPlot = (y) => plotTop + (1 - y) * (plotBottom - plotTop);
+
+    ctx.strokeStyle = faint;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(mid, plotTop);
+    ctx.lineTo(mid, plotBottom);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = faint;
+    ctx.font = "10px Manrope, system-ui, sans-serif";
+    ctx.fillText("PCA (linear)", pad + 4, plotTop + 12);
+    ctx.fillText("UMAP (nonlinear)", mid + 12, plotTop + 12);
+    ctx.fillText("PC2", pad + 2, plotTop + 2);
+    ctx.fillText("PC1", pad + halfW - 22, plotBottom + 14);
+    ctx.fillText("UMAP-2", mid + 8, plotTop + 2);
+    ctx.fillText("UMAP-1", mid + halfW - 8, plotBottom + 14);
+
+    DATA.points.forEach((p) => {
+      ctx.fillStyle = cssColor(SPECIES_COLOR[p.sp]);
+      ctx.globalAlpha = 0.82;
+      ctx.fillRect(sxPca(p.x) - 2, syPlot(p.y) - 2, 4, 4);
+      ctx.globalAlpha = 0.82;
+      ctx.fillRect(sxU(p.umapX) - 2, syPlot(p.umapY) - 2, 4, 4);
+    });
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = faint;
+    ctx.font = "11px Manrope, system-ui, sans-serif";
+    ctx.fillText("same detections, two 2D maps (species color)", pad, h - 10);
     return;
   }
 
