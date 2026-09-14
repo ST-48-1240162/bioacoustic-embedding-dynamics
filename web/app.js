@@ -69,7 +69,7 @@ const MATH = {
 
 const COPY = {
     kicker: "colab walkthrough",
-    lede: "Runtime, Run all. The notebook clones the repo, runs BirdNET on a short clip (or your manifest), and tracks how the embedding cloud moves through the recording.",
+    lede: "Takes a JSONL of bioacoustic detections (optional BirdNET embeddings) and runs PCA, UMAP, a binned centroid trajectory, change-point detection, and Gaussian HMMs on how the embedding cloud changes over time.",
     intro_label: "intro",
     intro_tabs: [
       { id: "overview", label: "overview" },
@@ -140,12 +140,10 @@ const COPY = {
     fig_missing: "Not included for this run. Try Demo, or run Colab.",
     step_fig_gap: "Only Demo includes this figure ($\\Delta t=15\\,\\mathrm{s}$). Route A and Route B stop at PCA and UMAP on the site.",
     runs: [
-      { id: "demo", label: "Demo" },
-      { id: "bacpipe", label: "Route A" },
-      { id: "bmz", label: "Route B" },
+      { id: "demo", label: "Demo", href: COLAB.demo },
+      { id: "bacpipe", label: "Route A", href: COLAB.a },
+      { id: "bmz", label: "Route B", href: COLAB.b },
     ],
-    nb_label: "notebooks",
-    nb_h: "notebooks",
     steps: [
       {
         chip: "detections",
@@ -219,11 +217,6 @@ const COPY = {
         ],
         math: MATH.shuffle,
       },
-    ],
-    nbs: [
-      { name: "Demo", meta: "CPU, about 5-10 min. BMZ BirdNET on the bacpipe test wav, $\\Delta t=15\\,\\mathrm{s}$ bins.", href: COLAB.demo },
-      { name: "Route A", meta: "T4 if available. bacpipe BirdNET; first run downloads weights.", href: COLAB.a },
-      { name: "Route B", meta: "CPU, about 5-10 min. BMZ BirdNET, $1024$-d. Falls back to bacpipe test wav when /content/audio is empty.", href: COLAB.b },
     ],
 };
 
@@ -970,6 +963,8 @@ function renderCopy() {
   const runChips = document.getElementById("run-chips");
   runChips.replaceChildren();
   c.runs.forEach((r) => {
+    const group = document.createElement("div");
+    group.className = "run-chip-group";
     const b = document.createElement("button");
     b.type = "button";
     b.className = "lite-chip-btn" + (r.id === runId ? " is-on" : "");
@@ -978,7 +973,17 @@ function renderCopy() {
       runId = r.id;
       renderCopy();
     });
-    runChips.appendChild(b);
+    group.appendChild(b);
+    if (r.href) {
+      const a = document.createElement("a");
+      a.className = "lite-chip-btn run-colab-link";
+      a.href = r.href;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.textContent = "Colab";
+      group.appendChild(a);
+    }
+    runChips.appendChild(group);
   });
 
   const figs = figsForRun(runId);
@@ -1034,27 +1039,6 @@ function renderCopy() {
   frame.classList.remove("is-empty");
   miss.hidden = true;
   img.src = `./reports/${runId}/${chosen.id}?v=${chosen.id}`;
-
-  const nb = document.getElementById("nb-list");
-  nb.replaceChildren();
-  c.nbs.forEach((n) => {
-    const row = document.createElement("div");
-    row.className = "nb-row";
-    const name = document.createElement("span");
-    name.className = "nb-name";
-    name.textContent = n.name;
-    const meta = document.createElement("span");
-    meta.className = "nb-meta";
-    appendInlineMath(meta, n.meta);
-    row.appendChild(name);
-    row.appendChild(meta);
-    const a = document.createElement("a");
-    a.className = "lite-chip-btn";
-    a.href = n.href;
-    a.textContent = "Colab";
-    row.appendChild(a);
-    nb.appendChild(row);
-  });
 }
 
 function setStep(i) {

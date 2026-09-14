@@ -146,6 +146,17 @@ h1 {
   align-items: center;
 }
 
+.run-chip-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.run-colab-link {
+  font-size: 0.74em;
+  color: var(--fg-dim);
+}
+
 .lite-chip-btn {
   display: inline-flex;
   align-items: center;
