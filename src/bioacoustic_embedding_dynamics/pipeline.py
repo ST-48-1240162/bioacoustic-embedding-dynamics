@@ -7,7 +7,6 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 
 from .changepoint import detection_rate_changepoints, trajectory_changepoints
 from .embeddings import embedding_matrix
@@ -16,13 +15,19 @@ from .features import scale_features
 from .hmm_regime import fit_regime_hmm
 from .io import load_detections
 from .plots import (
-    save_hmm_states,
+    save_hmm_compare,
     save_scatter_2d,
+    save_shuffle_null,
     save_timeline_changepoints,
     save_trajectory_path,
 )
 from .reduce import run_pca, run_umap
-from .trajectory import bin_embedding_centroids, embedding_geometry, trajectory_metrics
+from .trajectory import (
+    bin_embedding_centroids,
+    embedding_geometry,
+    permute_start_times,
+    trajectory_metrics,
+)
 
 
 @dataclass
@@ -36,7 +41,14 @@ class AnalysisSummary:
     trajectory: dict[str, float]
     changepoints_min: list[float]
     trajectory_changepoints_min: list[float]
+    shuffle_trajectory_changepoints_min: list[float]
     hmm_n_states: int
+    hmm_activity_n_states: int
+    weighted_centroids: bool
+
+
+def _minutes(times: list[float]) -> list[float]:
+    return [round(float(t) / 60.0, 2) for t in times]
 
 
 def run_analysis(
@@ -90,11 +102,10 @@ def run_analysis(
     )
 
     geom = embedding_geometry(X, df["species"])
-    centroids = bin_embedding_centroids(df, X, Z_pca, bin_s=bin_s)
+    centroids = bin_embedding_centroids(df, X, Z_pca, bin_s=bin_s, weight_by_confidence=True)
     centroids.to_csv(out_dir / "embedding_trajectory.csv", index=False)
 
     traj = trajectory_metrics(centroids)
-    save_trajectory_path(centroids, out_dir / "trajectory_pca.png")
 
     cps = detection_rate_changepoints(centroids, pen=changepoint_pen)
     save_timeline_changepoints(centroids, cps, out_dir / "changepoints.png")
@@ -109,9 +120,35 @@ def run_analysis(
         ylabel="PC1 centroid",
     )
 
-    _hmm, states, _pca_bin = fit_regime_hmm(centroids, n_states=hmm_states)
-    save_hmm_states(centroids, states, out_dir / "hmm_regimes.png")
-    centroids.assign(hmm_state=states).to_csv(out_dir / "binned_with_hmm.csv", index=False)
+    _hmm_emb, embed_states = fit_regime_hmm(
+        centroids, n_states=hmm_states, feature_set="embedding", random_state=seed
+    )
+    _hmm_act, activity_states = fit_regime_hmm(
+        centroids, n_states=hmm_states, feature_set="activity", random_state=seed
+    )
+    save_hmm_compare(centroids, embed_states, activity_states, out_dir / "hmm_regimes.png")
+    save_trajectory_path(centroids, out_dir / "trajectory_pca.png", states=embed_states)
+    centroids.assign(hmm_state=embed_states, hmm_activity_state=activity_states).to_csv(
+        out_dir / "binned_with_hmm.csv", index=False
+    )
+
+    df_shuf = permute_start_times(df, seed=seed)
+    centroids_shuf = bin_embedding_centroids(
+        df_shuf, X, Z_pca, bin_s=bin_s, weight_by_confidence=True
+    )
+    traj_cps_shuf = trajectory_changepoints(centroids_shuf, pen=changepoint_pen)
+    _hmm_shuf, embed_states_shuf = fit_regime_hmm(
+        centroids_shuf, n_states=hmm_states, feature_set="embedding", random_state=seed
+    )
+    save_shuffle_null(
+        centroids,
+        centroids_shuf,
+        traj_cps,
+        traj_cps_shuf,
+        embed_states,
+        embed_states_shuf,
+        out_dir / "shuffle_null.png",
+    )
 
     duration_min = float((df["start_s"].max() - df["start_s"].min()) / 60.0)
     summary = AnalysisSummary(
@@ -127,9 +164,12 @@ def run_analysis(
             "max_step_velocity": traj.max_step_velocity,
             "turning_angle_mean_deg": traj.turning_angle_mean_deg,
         },
-        changepoints_min=[round(float(t) / 60.0, 2) for t in cps],
-        trajectory_changepoints_min=[round(float(t) / 60.0, 2) for t in traj_cps],
-        hmm_n_states=int(len(np.unique(states))),
+        changepoints_min=_minutes(cps),
+        trajectory_changepoints_min=_minutes(traj_cps),
+        shuffle_trajectory_changepoints_min=_minutes(traj_cps_shuf),
+        hmm_n_states=int(len(np.unique(embed_states))),
+        hmm_activity_n_states=int(len(np.unique(activity_states))),
+        weighted_centroids=True,
     )
     (out_dir / "summary.json").write_text(json.dumps(asdict(summary), indent=2) + "\n", encoding="utf-8")
     return summary

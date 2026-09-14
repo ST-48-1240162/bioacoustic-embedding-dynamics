@@ -54,20 +54,38 @@ def save_scatter_2d(
     plt.close(fig)
 
 
-def save_trajectory_path(centroids: pd.DataFrame, out: Path) -> None:
+def save_trajectory_path(
+    centroids: pd.DataFrame,
+    out: Path,
+    *,
+    states: np.ndarray | None = None,
+) -> None:
     fig, ax = plt.subplots(figsize=(7, 5))
     x = centroids["pca_x"].to_numpy()
     y = centroids["pca_y"].to_numpy()
-    t = centroids["t_center_s"].to_numpy() / 60.0
-    ax.plot(x, y, color="steelblue", lw=1, alpha=0.5, zorder=1)
-    sc = ax.scatter(x, y, c=t, cmap="viridis", s=28, zorder=2)
+    ax.plot(x, y, color="0.75", lw=1, alpha=0.8, zorder=1)
     for i in range(len(x) - 1):
-        ax.annotate("", xy=(x[i + 1], y[i + 1]), xytext=(x[i], y[i]), arrowprops=dict(arrowstyle="->", color="gray", lw=0.6, alpha=0.5))
-    cb = fig.colorbar(sc, ax=ax)
-    cb.set_label("Time (min)")
+        ax.annotate(
+            "",
+            xy=(x[i + 1], y[i + 1]),
+            xytext=(x[i], y[i]),
+            arrowprops=dict(arrowstyle="->", color="gray", lw=0.6, alpha=0.5),
+        )
+    if states is None:
+        t = centroids["t_center_s"].to_numpy() / 60.0
+        sc = ax.scatter(x, y, c=t, cmap="viridis", s=28, zorder=2)
+        cb = fig.colorbar(sc, ax=ax)
+        cb.set_label("Time (min)")
+        ax.set_title("Embedding-space trajectory (binned centroids)")
+    else:
+        states = np.asarray(states)
+        for s in np.unique(states):
+            mask = states == s
+            ax.scatter(x[mask], y[mask], s=36, zorder=2, label=f"HMM {int(s)}")
+        ax.legend(fontsize=8, loc="best", title="state")
+        ax.set_title("Embedding-space trajectory (color = HMM state)")
     ax.set_xlabel("PC1 centroid")
     ax.set_ylabel("PC2 centroid")
-    ax.set_title("Embedding-space trajectory (binned centroids)")
     fig.tight_layout()
     fig.savefig(out, dpi=150)
     plt.close(fig)
@@ -81,6 +99,64 @@ def save_hmm_states(binned: pd.DataFrame, states: np.ndarray, out: Path) -> None
     ax.set_ylabel("HMM state")
     ax.set_title("Gaussian HMM regimes on binned embedding dynamics")
     ax.set_yticks(sorted(np.unique(states)))
+    fig.tight_layout()
+    fig.savefig(out, dpi=150)
+    plt.close(fig)
+
+
+def save_hmm_compare(
+    binned: pd.DataFrame,
+    embed_states: np.ndarray,
+    activity_states: np.ndarray,
+    out: Path,
+) -> None:
+    t = binned["t_center_s"].to_numpy() / 60.0
+    fig, axes = plt.subplots(2, 1, figsize=(10, 5.2), sharex=True)
+    for ax, states, title in (
+        (axes[0], embed_states, "HMM on embedding centroids (PC1/PC2)"),
+        (axes[1], activity_states, "HMM on activity (rate, richness, confidence)"),
+    ):
+        ax.step(t, states, where="mid", lw=1.5)
+        ax.set_ylabel("state")
+        ax.set_title(title)
+        ax.set_yticks(sorted(np.unique(states)))
+    axes[1].set_xlabel("Time (minutes)")
+    fig.tight_layout()
+    fig.savefig(out, dpi=150)
+    plt.close(fig)
+
+
+def save_shuffle_null(
+    original: pd.DataFrame,
+    shuffled: pd.DataFrame,
+    orig_cps: list[float],
+    shuf_cps: list[float],
+    orig_states: np.ndarray,
+    shuf_states: np.ndarray,
+    out: Path,
+) -> None:
+    """Time-shuffle control: embedding PC1 change-points and HMM should collapse."""
+    fig, axes = plt.subplots(2, 2, figsize=(11, 6.2), sharex="col")
+    panels = (
+        (axes[0, 0], original, orig_cps, "PC1 (original)", "pca_x"),
+        (axes[0, 1], shuffled, shuf_cps, "PC1 (time shuffled)", "pca_x"),
+        (axes[1, 0], original, None, "HMM on centroids (original)", orig_states),
+        (axes[1, 1], shuffled, None, "HMM on centroids (time shuffled)", shuf_states),
+    )
+    for ax, frame, cps, title, extra in panels:
+        t = frame["t_center_s"].to_numpy() / 60.0
+        if isinstance(extra, str):
+            ax.plot(t, frame[extra], marker="o", ms=3, lw=1)
+            for cp in cps or []:
+                ax.axvline(cp / 60.0, color="crimson", ls="--", lw=1, alpha=0.8)
+            ax.set_ylabel("PC1 centroid")
+        else:
+            ax.step(t, extra, where="mid", lw=1.5)
+            ax.set_ylabel("state")
+            ax.set_yticks(sorted(np.unique(extra)))
+        ax.set_title(title)
+    axes[1, 0].set_xlabel("Time (minutes)")
+    axes[1, 1].set_xlabel("Time (minutes)")
     fig.tight_layout()
     fig.savefig(out, dpi=150)
     plt.close(fig)

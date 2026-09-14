@@ -17,36 +17,74 @@ class TrajectorySummary:
     turning_angle_mean_deg: float
 
 
+def permute_start_times(df: pd.DataFrame, *, seed: int) -> pd.DataFrame:
+    """Keep embeddings/species on each row; reassign start times from the same set."""
+    out = df.copy()
+    rng = np.random.default_rng(seed)
+    starts = out["start_s"].to_numpy(dtype=np.float64)
+    durs = (out["end_s"].to_numpy(dtype=np.float64) - starts)
+    new_start = rng.permutation(starts)
+    out["start_s"] = new_start
+    out["end_s"] = new_start + durs
+    return out
+
+
+def _confidence_weights(mask: np.ndarray, confidence: np.ndarray) -> np.ndarray:
+    w = np.clip(confidence[mask].astype(np.float64), 0.0, None)
+    total = float(w.sum())
+    if total <= 0.0:
+        n = int(mask.sum())
+        return np.full(n, 1.0 / max(n, 1), dtype=np.float64)
+    return w / total
+
+
 def bin_embedding_centroids(
     df: pd.DataFrame,
     X: np.ndarray,
     Z: np.ndarray,
     *,
     bin_s: float = 60.0,
+    weight_by_confidence: bool = True,
 ) -> pd.DataFrame:
-    """Per-bin mean embedding (high-dim) and reduced coords (e.g. PCA)."""
+    """Per-bin embedding centroid (confidence-weighted) and reduced coords (e.g. PCA)."""
     t0 = df["start_s"].min()
     t1 = df["start_s"].max()
     edges = np.arange(t0, t1 + bin_s, bin_s)
     if len(edges) < 3:
         edges = np.linspace(t0, t1, num=4)
     bin_idx = np.digitize(df["start_s"].to_numpy(), edges[1:-1], right=False)
+    conf = df["confidence"].to_numpy(dtype=np.float64)
+    starts = df["start_s"].to_numpy(dtype=np.float64)
 
     rows: list[dict] = []
     for b in sorted(np.unique(bin_idx)):
         mask = bin_idx == b
         if not mask.any():
             continue
+        if weight_by_confidence:
+            w = _confidence_weights(mask, conf)
+            t_center = float(np.dot(starts[mask], w))
+            mean_conf = float(np.dot(conf[mask], w))
+            pca_x = float(np.dot(Z[mask, 0], w))
+            pca_y = float(np.dot(Z[mask, 1], w)) if Z.shape[1] > 1 else 0.0
+            emb = {f"emb_{i}": float(np.dot(X[mask, i], w)) for i in range(min(8, X.shape[1]))}
+        else:
+            t_center = float(starts[mask].mean())
+            mean_conf = float(conf[mask].mean())
+            pca_x = float(Z[mask, 0].mean())
+            pca_y = float(Z[mask, 1].mean()) if Z.shape[1] > 1 else 0.0
+            emb = {f"emb_{i}": float(X[mask, i].mean()) for i in range(min(8, X.shape[1]))}
         rows.append(
             {
                 "bin_idx": int(b),
-                "t_center_s": float(df.loc[mask, "start_s"].mean()),
+                "t_center_s": t_center,
                 "detection_count": int(mask.sum()),
-                "species_richness": int(df.loc[mask, "species"].nunique()),
-                "mean_confidence": float(df.loc[mask, "confidence"].mean()),
-                **{f"emb_{i}": float(X[mask, i].mean()) for i in range(min(8, X.shape[1]))},
-                "pca_x": float(Z[mask, 0].mean()),
-                "pca_y": float(Z[mask, 1].mean()) if Z.shape[1] > 1 else 0.0,
+                "species_richness": int(pd.unique(df["species"].to_numpy()[mask]).size),
+                "mean_confidence": mean_conf,
+                "weight_sum": float(conf[mask].sum()) if weight_by_confidence else float(mask.sum()),
+                **emb,
+                "pca_x": pca_x,
+                "pca_y": pca_y,
             }
         )
     out = pd.DataFrame(rows)

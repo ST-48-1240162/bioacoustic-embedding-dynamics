@@ -20,6 +20,7 @@ REQUIRED_FIGURES = [
     "changepoints.png",
     "trajectory_changepoints.png",
     "hmm_regimes.png",
+    "shuffle_null.png",
 ]
 
 

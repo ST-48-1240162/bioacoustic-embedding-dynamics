@@ -60,11 +60,12 @@ Aliases: `scientific_name`, `score`, `window_start_s`. If `embedding` is missing
 | File | What it is |
 |------|------------|
 | `pca_species.png`, `umap_species.png` | Embedding geometry by species |
-| `trajectory_pca.png` | Binned centroid path in PC space |
+| `trajectory_pca.png` | Binned centroid path, colored by embedding HMM state |
 | `changepoints.png` | Activity-rate change-points |
 | `trajectory_changepoints.png` | Trajectory (PC1) change-points |
-| `hmm_regimes.png` | HMM state over time |
-| `embedding_trajectory.csv`, `binned_with_hmm.csv` | Binned tables |
+| `hmm_regimes.png` | Embedding HMM vs activity HMM |
+| `shuffle_null.png` | Time-shuffle control (PC1 change-points and embedding HMM) |
+| `embedding_trajectory.csv`, `binned_with_hmm.csv` | Binned tables (confidence-weighted centroids) |
 | `summary.json`, `run_config.json` | Run metadata |
 
 ## License
