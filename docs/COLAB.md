@@ -2,6 +2,8 @@
 
 CPU is enough for the demo (~2-3 min) and for Route B. Use a T4 for Route A (bacpipe).
 
+Open a notebook, then Runtime, Run all. The first code cell clones this repo into `/content`. You do not need to uncomment anything.
+
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ST-48-1240162/bioacoustic-embedding-dynamics/blob/main/docs/Demo_Colab.ipynb)
 
 | Notebook | When |
