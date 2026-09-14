@@ -45,8 +45,8 @@ const COPY = {
     next: "next",
     fig_label: "reports/",
     fig_h: "Output figures",
-    fig_note: "PNGs from Colab test runs. Demo, Route B, or Route A. shuffle_null.png is on Route A only.",
-    fig_missing: "This set has no PNG for that file. A current Run all still writes it.",
+    fig_note: "Demo shows the full time-series set. Route A and Route B only show PCA and UMAP: their bundled test clips are about one minute with two occupied bins, so centroid and regime plots are not worth reading.",
+    fig_missing: "This PNG is not in the site bundle. Colab still writes it on Run all.",
     runs: [
       { id: "demo", label: "Demo" },
       { id: "bmz", label: "Route B" },
@@ -102,15 +102,6 @@ const COPY = {
         body: "Only the times are permuted. Species and embeddings stay on the same rows. If the PC1 breaks and HMM flips depended on order, the shuffled side should look noisier. Compare hmm_n_switches with shuffle_hmm_n_switches in summary.json. The fit still uses a fixed number of states, so the right-hand HMM will not go flat.",
         math: MATH.shuffle,
       },
-    ],
-    figs: [
-      { id: "pca_species.png", title: "species in PCA", body: "One point per detection. Color is species. Axes are the first two principal components of the scaled embedding. Useful if you want to see whether species sit apart. The tick labels are not physical units.", math: MATH.pca },
-      { id: "umap_species.png", title: "species in UMAP", body: "Same points, nonlinear map. Handy if PCA is a blob but local groups still exist. A distance on this plot is not a PCA distance." },
-      { id: "trajectory_pca.png", title: "minute centroids", body: "Each marker is one minute's confidence-weighted centroid in PC space. Color is HMM state. A long arrow means that minute's average vector moved a long way.", math: MATH.centroid },
-      { id: "changepoints.png", title: "call rate", body: "Call rate against minutes, with empty bins at 0. Red dashed lines in the Colab PNG are PELT breaks in how often animals called.", math: [...MATH.rate, ...MATH.peltRate] },
-      { id: "trajectory_changepoints.png", title: "centroid PC1", body: "PC1 of the centroid against minutes. Breaks here are shifts in the average vector. Put changepoints.png next to it.", math: MATH.peltPc1 },
-      { id: "hmm_regimes.png", title: "two HMMs", body: "Top: HMM on embedding centroids. Bottom: HMM on activity stats. They do not have to agree.", math: MATH.hmm },
-      { id: "shuffle_null.png", title: "shuffle times", body: "Original times on the left, shuffled start_s on the right. The test is whether the ordered structure survives the permutation.", math: MATH.shuffle },
     ],
     nbs: [
       { name: "Demo", meta: "CPU, about 2-3 min. Fake 128-d vectors with three planted regimes.", href: COLAB.demo },
@@ -206,24 +197,41 @@ function generate() {
   return { points, bins, shufBins, species };
 }
 
-const BASE_PNG = [
-  "pca_species.png",
-  "umap_species.png",
-  "trajectory_pca.png",
-  "changepoints.png",
-  "trajectory_changepoints.png",
-  "hmm_regimes.png",
+const FIG_DEFS = [
+  { id: "pca_species.png", title: "species in PCA", body: "One point per detection. Color is species. Axes are the first two principal components of the scaled embedding. Useful if you want to see whether species sit apart. The tick labels are not physical units.", math: MATH.pca },
+  { id: "umap_species.png", title: "species in UMAP", body: "Same points, nonlinear map. Handy if PCA is a blob but local groups still exist. A distance on this plot is not a PCA distance." },
+  { id: "trajectory_pca.png", title: "minute centroids", body: "Each marker is one minute's confidence-weighted centroid in PC space. Color is HMM state. Needs many occupied bins over a long recording; two points is just a line.", math: MATH.centroid },
+  { id: "changepoints.png", title: "call rate", body: "Call rate against minutes, with empty bins at 0. Red dashed lines in the Colab PNG are PELT breaks in how often animals called.", math: [...MATH.rate, ...MATH.peltRate] },
+  { id: "trajectory_changepoints.png", title: "centroid PC1", body: "PC1 of the centroid against minutes. Breaks here are shifts in the average vector. Put changepoints.png next to it.", math: MATH.peltPc1 },
+  { id: "hmm_regimes.png", title: "two HMMs", body: "Top: HMM on embedding centroids. Bottom: HMM on activity stats. They do not have to agree.", math: MATH.hmm },
+  { id: "shuffle_null.png", title: "shuffle times", body: "Original times on the left, shuffled start_s on the right. The test is whether the ordered structure survives the permutation.", math: MATH.shuffle },
 ];
-const RUN_PNG = {
-  demo: new Set(BASE_PNG),
-  bmz: new Set(BASE_PNG),
-  bacpipe: new Set([...BASE_PNG, "shuffle_null.png"]),
+
+const RUN_FIG_IDS = {
+  demo: [
+    "pca_species.png",
+    "umap_species.png",
+    "trajectory_pca.png",
+    "changepoints.png",
+    "trajectory_changepoints.png",
+    "hmm_regimes.png",
+  ],
+  bmz: ["pca_species.png", "umap_species.png"],
+  bacpipe: ["pca_species.png", "umap_species.png"],
 };
 
-function hasPng(run, figId) {
-  return RUN_PNG[run]?.has(figId) ?? false;
+function figsForRun(run) {
+  const ids = RUN_FIG_IDS[run] || RUN_FIG_IDS.demo;
+  return ids.map((id) => FIG_DEFS.find((f) => f.id === id)).filter(Boolean);
 }
-const STEP_FIG = { 2: 0, 3: 2, 4: 3, 5: 5, 6: 6 };
+
+const STEP_FIG_ID = {
+  2: "pca_species.png",
+  3: "trajectory_pca.png",
+  4: "changepoints.png",
+  5: "hmm_regimes.png",
+  6: "shuffle_null.png",
+};
 
 const DATA = generate();
 const SPECIES_COLOR = {
@@ -423,9 +431,12 @@ function renderCopy() {
     runChips.appendChild(b);
   });
 
+  const figs = figsForRun(runId);
+  if (figIdx >= figs.length) figIdx = 0;
+
   const figList = document.getElementById("fig-list");
   figList.replaceChildren();
-  c.figs.forEach((f, i) => {
+  figs.forEach((f, i) => {
     const b = document.createElement("button");
     b.type = "button";
     b.className = "fig-item" + (i === figIdx ? " is-on" : "");
@@ -448,7 +459,7 @@ function renderCopy() {
     figList.appendChild(b);
   });
 
-  const chosen = c.figs[figIdx];
+  const chosen = figs[figIdx];
   document.getElementById("fig-file").textContent = chosen.id;
   document.getElementById("fig-body").textContent = chosen.body;
   renderMath(document.getElementById("fig-math"), chosen.math);
@@ -456,18 +467,10 @@ function renderCopy() {
   const img = document.getElementById("fig-img");
   const frame = document.getElementById("fig-frame");
   const miss = document.getElementById("fig-missing");
-  if (hasPng(runId, chosen.id)) {
-    img.src = `./reports/${runId}/${chosen.id}`;
-    img.alt = chosen.title;
-    frame.classList.remove("is-empty");
-    miss.hidden = true;
-  } else {
-    img.removeAttribute("src");
-    img.alt = "";
-    frame.classList.add("is-empty");
-    miss.hidden = false;
-    miss.textContent = c.fig_missing;
-  }
+  img.src = `./reports/${runId}/${chosen.id}`;
+  img.alt = chosen.title;
+  frame.classList.remove("is-empty");
+  miss.hidden = true;
 
   const nb = document.getElementById("nb-list");
   nb.replaceChildren();
@@ -486,7 +489,12 @@ function renderCopy() {
 
 function setStep(i) {
   step = Math.max(0, Math.min(COPY.steps.length - 1, i));
-  if (STEP_FIG[step] != null) figIdx = STEP_FIG[step];
+  const figId = STEP_FIG_ID[step];
+  if (figId != null) {
+    const figs = figsForRun(runId);
+    const idx = figs.findIndex((f) => f.id === figId);
+    if (idx >= 0) figIdx = idx;
+  }
   renderCopy();
   draw();
 }
