@@ -126,7 +126,7 @@ const COPY = {
       },
     ],
     walk_label: "pipeline",
-    keys: "Left and right arrows change the step. The drawing on the left is a cartoon. It is not the PNG Colab exports.",
+    keys: "Left and right arrows change the step. The canvas is a cartoon per step (trajectory = path with arrows; HMM = colored states plus two timeline ribbons). It is not the PNG Colab exports.",
     prev: "prev",
     next: "next",
     fig_label: "reports/",
@@ -263,7 +263,7 @@ function generate() {
     const members = points.filter((p) => p.t >= t0 && p.t < t1);
     const tMid = (t0 + t1) / 2;
     if (!members.length) {
-      bins.push({ t: tMid, x: null, y: null, rate: 0, state: 0 });
+      bins.push({ t: tMid, x: null, y: null, rate: 0, state: 0, activityState: 0 });
       continue;
     }
     let wsum = 0;
@@ -277,7 +277,8 @@ function generate() {
     x /= wsum;
     y /= wsum;
     const state = tMid < 1 / 3 ? 0 : tMid < 2 / 3 ? 1 : 2;
-    bins.push({ t: tMid, x, y, rate: members.length, state });
+    const activityState = members.length >= 5 ? 2 : members.length >= 2 ? 1 : 0;
+    bins.push({ t: tMid, x, y, rate: members.length, state, activityState });
   }
   const shuf = points.map((p, i) => ({ ...p, t: points[(i * 17) % points.length].t }));
   shuf.sort((a, b) => a.t - b.t);
@@ -288,7 +289,7 @@ function generate() {
     const members = shuf.filter((p) => p.t >= t0 && p.t < t1);
     const tMid = (t0 + t1) / 2;
     if (!members.length) {
-      shufBins.push({ t: tMid, x: null, y: null, rate: 0, state: (b % 3) });
+      shufBins.push({ t: tMid, x: null, y: null, rate: 0, state: b % 3, activityState: b % 3 });
       continue;
     }
     let x = 0;
@@ -303,9 +304,43 @@ function generate() {
       y: y / members.length,
       rate: members.length,
       state: b % 3,
+      activityState: (b + 1) % 3,
     });
   }
   return { points, bins, shufBins, species };
+}
+
+function drawArrowhead(ctx, x0, y0, x1, y1, color) {
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  const len = Math.hypot(dx, dy);
+  if (len < 8) return;
+  const ux = dx / len;
+  const uy = dy / len;
+  const ax = x1 - ux * 7;
+  const ay = y1 - uy * 7;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(ax - uy * 4, ay + ux * 4);
+  ctx.lineTo(ax + uy * 4, ay - ux * 4);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawStateRibbon(ctx, bins, y0, hRow, label, stateKey, stateCol, pad, plotW) {
+  const faint = getComputedStyle(document.body).getPropertyValue("--fg-dim").trim();
+  ctx.font = "10px Manrope, system-ui, sans-serif";
+  ctx.fillStyle = faint;
+  ctx.fillText(label, pad, y0 + hRow * 0.72);
+  bins.forEach((b, i) => {
+    const x = pad + (i / bins.length) * plotW;
+    const wCell = plotW / bins.length - 1;
+    ctx.fillStyle = stateCol[b[stateKey] ?? 0] || faint;
+    ctx.globalAlpha = b.x == null && stateKey === "state" ? 0.15 : 0.85;
+    ctx.fillRect(x, y0, wCell, hRow);
+  });
+  ctx.globalAlpha = 1;
 }
 
 const FIG_DEFS = [
@@ -439,7 +474,7 @@ function draw() {
   const h = cssH;
   ctx.clearRect(0, 0, w, h);
   const pad = 28;
-  const plotH = step === 4 || step === 6 ? h - 88 : h - 36;
+  const plotH = step === 4 || step === 6 ? h - 88 : step === 5 ? h - 118 : h - 36;
   const plotW = w - pad * 2;
 
   function sx(x) {
@@ -502,19 +537,17 @@ function draw() {
     return;
   }
 
-  if (step === 2) setVizLabels(true, "\\mathrm{PC2}", "\\mathrm{PC1}");
+  function drawScatter(alpha) {
+    DATA.points.forEach((p) => {
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = cssColor(SPECIES_COLOR[p.sp]);
+      ctx.fillRect(sx(p.x) - 2, sy(p.y) - 2, 4, 4);
+    });
+    ctx.globalAlpha = 1;
+  }
 
-  DATA.points.forEach((p) => {
-    ctx.globalAlpha = step >= 3 ? 0.22 : 0.8;
-    ctx.fillStyle = cssColor(SPECIES_COLOR[p.sp]);
-    ctx.fillRect(sx(p.x) - 2, sy(p.y) - 2, 4, 4);
-  });
-  ctx.globalAlpha = 1;
-
-  const useBins = step === 6 ? DATA.shufBins : DATA.bins;
-  const occ = useBins.filter((b) => b.x != null);
-
-  if (step >= 3) {
+  function drawCentroidPath(occ, { arrows = false, colorMarkers = false } = {}) {
+    if (occ.length < 1) return;
     ctx.beginPath();
     occ.forEach((b, i) => {
       const x = sx(b.x);
@@ -523,15 +556,78 @@ function draw() {
       else ctx.lineTo(x, y);
     });
     ctx.strokeStyle = faint;
-    ctx.lineWidth = 1;
+    ctx.lineWidth = colorMarkers ? 1 : 1.5;
     ctx.stroke();
+    if (arrows) {
+      for (let i = 1; i < occ.length; i++) {
+        drawArrowhead(ctx, sx(occ[i - 1].x), sy(occ[i - 1].y), sx(occ[i].x), sy(occ[i].y), faint);
+      }
+    }
     occ.forEach((b) => {
-      ctx.fillStyle = step >= 5 ? stateCol[b.state] : ink;
-      ctx.fillRect(sx(b.x) - 3, sy(b.y) - 3, 6, 6);
+      if (colorMarkers) {
+        ctx.fillStyle = stateCol[b.state];
+        ctx.beginPath();
+        ctx.arc(sx(b.x), sy(b.y), 5, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.fillStyle = ink;
+        ctx.fillRect(sx(b.x) - 4, sy(b.y) - 4, 8, 8);
+      }
     });
   }
 
+  if (step === 2) {
+    setVizLabels(true, "\\mathrm{PC2}", "\\mathrm{PC1}");
+    drawScatter(0.8);
+    return;
+  }
+
+  const useBins = step === 6 ? DATA.shufBins : DATA.bins;
+  const occ = useBins.filter((b) => b.x != null);
+
+  if (step === 3) {
+    setVizLabels(true, "\\mathrm{PC2}", "\\mathrm{PC1}");
+    drawScatter(0.22);
+    drawCentroidPath(occ, { arrows: true });
+    ctx.fillStyle = faint;
+    ctx.font = "11px Manrope, system-ui, sans-serif";
+    ctx.fillText("confidence-weighted centroid path (time order)", pad, h - 10);
+    return;
+  }
+
+  if (step === 5) {
+    setVizLabels(true, "\\mathrm{PC2}", "\\mathrm{PC1}");
+    drawScatter(0.12);
+    occ.forEach((b) => {
+      ctx.fillStyle = stateCol[b.state];
+      ctx.beginPath();
+      ctx.arc(sx(b.x), sy(b.y), 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = ink;
+      ctx.font = "9px Manrope, system-ui, sans-serif";
+      ctx.fillText(String(b.state), sx(b.x) - 3, sy(b.y) + 3);
+    });
+    stateCol.forEach((col, i) => {
+      const lx = pad + i * 52;
+      const ly = h - 102;
+      ctx.fillStyle = col;
+      ctx.fillRect(lx, ly, 10, 10);
+      ctx.fillStyle = faint;
+      ctx.font = "10px Manrope, system-ui, sans-serif";
+      ctx.fillText(`embed ${i}`, lx + 14, ly + 9);
+    });
+    drawStateRibbon(ctx, useBins, h - 88, 14, "embedding HMM", "state", stateCol, pad, plotW);
+    drawStateRibbon(ctx, useBins, h - 68, 14, "activity HMM", "activityState", stateCol, pad, plotW);
+    ctx.fillStyle = faint;
+    ctx.font = "11px Manrope, system-ui, sans-serif";
+    ctx.fillText("disks = HMM state on PC centroid; ribbons = states over bins", pad, h - 10);
+    return;
+  }
+
   if (step === 4 || step === 6) {
+    setVizLabels(true, "\\mathrm{PC2}", "\\mathrm{PC1}");
+    drawScatter(0.18);
+    drawCentroidPath(occ);
     const base = h - 52;
     const maxR = Math.max(...useBins.map((b) => b.rate), 1);
     useBins.forEach((b, i) => {
@@ -555,6 +651,7 @@ function draw() {
     ctx.font = "11px Manrope, system-ui, sans-serif";
     ctx.fillText("calls per bin, empty bins included", pad, h - 8);
     setVizLabels(true, "r_b", "t");
+    return;
   }
 }
 
