@@ -35,17 +35,17 @@ const MATH = {
 
 const COPY = {
     kicker: "colab walkthrough",
-    lede: "Runtime, Run all. The notebook clones this repo, writes a sample detection JSONL or loads yours, and plots the embedding vectors for the length of the recording.",
+    lede: "Runtime, Run all. The notebook clones this repo, runs BirdNET on a short real clip (or your manifest), and plots embedding dynamics for that recording.",
     ask_label: "what it is doing",
     ask_h: "Embeddings during the recording",
-    ask_p: "BirdNET already names the species and emits a 1024-d vector for each detection. The usual next step is to count those calls. This notebook keeps the vectors and watches whether that cloud moves during the file. The demo plants three regimes so you can see if the plots respond. Route A and Route B use real BirdNET embeddings.",
+    ask_p: "BirdNET already names the species and emits a 1024-d vector for each detection. The usual next step is to count those calls. This notebook keeps the vectors and watches whether that cloud moves during the file. Demo, Route A, and Route B all use real BirdNET embeddings on short test audio (~1 min).",
     walk_label: "pipeline",
     keys: "Left and right arrows change the step. The drawing on the left is a cartoon. It is not the PNG Colab exports.",
     prev: "prev",
     next: "next",
     fig_label: "reports/",
     fig_h: "Output figures",
-    fig_note: "Demo shows the full time-series set. Route A and Route B only show PCA and UMAP: their bundled test clips are about one minute with two occupied bins, so centroid and regime plots are not worth reading.",
+    fig_note: "Demo uses 15 s bins on the bacpipe test wav (~1 min, 22 BirdNET detections, five occupied bins). Route A and Route B site bundles only include PCA and UMAP (default 60 s bins on that clip).",
     fig_missing: "This PNG is not in the site bundle. Colab still writes it on Run all.",
     runs: [
       { id: "demo", label: "Demo" },
@@ -59,13 +59,13 @@ const COPY = {
         chip: "detections",
         file: "JSONL manifest",
         title: "One JSON line per detection",
-        body: "Each line has start_s, species, confidence, and an optional embedding. The demo writes a fake three-hour site whose species pool changes twice. Minutes with no calls stay on the timeline as rate 0.",
+        body: "Each line has start_s, species, confidence, and an optional embedding. The demo runs BMZ BirdNET on the bacpipe bundled test wav (~1 min). Empty bins stay on the timeline as rate 0.",
       },
       {
         chip: "vectors",
         file: "BirdNET or demo mapper",
         title: "Where the 1024-d numbers come from",
-        body: "Route A (bacpipe) and Route B (BMZ) attach BirdNET embeddings. If that column is empty, a small PyTorch mapper fills it, and only for the demo. Mixing real vectors with missing ones is an error.",
+        body: "Route A (bacpipe) and Route B (BMZ) attach BirdNET embeddings. Pass --make-sample only if you want a synthetic JSONL for offline testing. Mixing real vectors with missing ones is an error.",
       },
       {
         chip: "geometry",
@@ -78,7 +78,7 @@ const COPY = {
         chip: "trajectory",
         file: "trajectory_pca.png",
         title: "Centroid of each minute",
-        body: "Calls go into 60 s bins by default. The bin mean is weighted by confidence, so weak detections pull less. The plot is that mean in PC1 and PC2. Color is the embedding HMM state. Arrows still follow time. Mean confidence is an unweighted average.",
+        body: "Calls go into time bins (15 s in the demo notebook, 60 s by default). The bin mean is weighted by confidence, so weak detections pull less. The plot is that mean in PC1 and PC2. Color is the embedding HMM state. Arrows still follow time.",
         math: MATH.centroid,
       },
       {
@@ -104,8 +104,8 @@ const COPY = {
       },
     ],
     nbs: [
-      { name: "Demo", meta: "CPU, about 2-3 min. Fake 128-d vectors with three planted regimes.", href: COLAB.demo },
-      { name: "Route B", meta: "CPU, about 5-10 min. BMZ BirdNET, 1024-d. If /content/audio is empty it writes a 120 s wav.", href: COLAB.b },
+      { name: "Demo", meta: "CPU, about 5-10 min. BMZ BirdNET on the bacpipe test wav, 15 s bins.", href: COLAB.demo },
+      { name: "Route B", meta: "CPU, about 5-10 min. BMZ BirdNET, 1024-d. Uses bacpipe test wav if /content/audio is empty.", href: COLAB.b },
       { name: "Route A", meta: "T4 if you have one. bacpipe BirdNET on the bundled test wavs. The first run downloads weights.", href: COLAB.a },
     ],
 };
@@ -215,6 +215,7 @@ const RUN_FIG_IDS = {
     "changepoints.png",
     "trajectory_changepoints.png",
     "hmm_regimes.png",
+    "shuffle_null.png",
   ],
   bmz: ["pca_species.png", "umap_species.png"],
   bacpipe: ["pca_species.png", "umap_species.png"],

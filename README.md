@@ -2,7 +2,7 @@
 
 Takes a JSONL of bioacoustic detections (optional embedding vectors) and runs PCA, UMAP, a binned centroid trajectory, change-point detection, and a Gaussian HMM.
 
-If a row has no `embedding`, a small PyTorch mapper synthesizes one for the demo. Real runs should pass BirdNET vectors from bacpipe (Route A) or bioacoustics-model-zoo (Route B).
+If a row has no `embedding`, a small PyTorch mapper can fill one (`--make-sample` for offline testing). Colab notebooks use real BirdNET vectors from bacpipe (Route A) or bioacoustics-model-zoo (Route B) on the short bacpipe test wav (~1 min).
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ST-48-1240162/bioacoustic-embedding-dynamics/blob/main/docs/Demo_Colab.ipynb)
 
@@ -16,7 +16,7 @@ If a row has no `embedding`, a small PyTorch mapper synthesizes one for the demo
 
 | Step | Where |
 |------|-------|
-| Demo manifest (synthetic 128-d) | Colab CPU, about 2-3 min |
+| Demo: BMZ BirdNET on bacpipe test wav, 15 s bins | Colab CPU, about 5-10 min |
 | Route B: BMZ BirdNET 1024-d | Colab CPU, about 5-10 min |
 | Route A: bacpipe BirdNET 1024-d | Colab T4, first run downloads weights |
 

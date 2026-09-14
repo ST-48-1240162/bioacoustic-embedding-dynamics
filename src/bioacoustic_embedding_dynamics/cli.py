@@ -29,11 +29,14 @@ def main() -> None:
         path = Path("data/sample_detections.jsonl")
         write_sample_manifest(path, seed=args.seed, embed_dim=args.embed_dim)
         print(f"Wrote {path}")
+        if args.manifest is None:
+            args.manifest = path
 
-    manifest = args.manifest or Path("data/sample_detections.jsonl")
+    if args.manifest is None:
+        raise SystemExit("Pass --manifest path/to/detections.jsonl (or --make-sample for synthetic JSONL only).")
+    manifest = args.manifest
     if not manifest.is_file():
-        write_sample_manifest(manifest, seed=args.seed, embed_dim=args.embed_dim)
-        print(f"Created demo manifest: {manifest}")
+        raise SystemExit(f"Manifest not found: {manifest}")
 
     summary = run_analysis(
         manifest,

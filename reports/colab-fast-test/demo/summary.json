@@ -1,26 +1,31 @@
 {
-  "n_detections": 61,
-  "embed_dim": 128,
+  "n_detections": 22,
+  "embed_dim": 1024,
   "synthesized_embeddings": false,
-  "duration_min": 176.4,
+  "duration_min": 1.1,
   "pca_explained_variance": [
-    0.1342,
-    0.1047
+    0.1564,
+    0.1093
   ],
   "embedding_geometry": {
-    "intra_cosine_dist_mean": 0.4156,
-    "inter_cosine_dist_mean": 0.9109,
-    "separation_ratio": 2.192
+    "intra_cosine_dist_mean": 0.2203,
+    "inter_cosine_dist_mean": 0.3596,
+    "separation_ratio": 1.632
   },
   "trajectory": {
-    "path_length": 295.5768,
-    "mean_step_velocity": 5.7956,
-    "max_step_velocity": 12.5338,
-    "turning_angle_mean_deg": 123.26
+    "path_length": 77.5358,
+    "mean_step_velocity": 19.384,
+    "max_step_velocity": 26.0263,
+    "turning_angle_mean_deg": 118.41
   },
   "changepoints_min": [],
-  "trajectory_changepoints_min": [
-    115.92
-  ],
-  "hmm_n_states": 3
+  "trajectory_changepoints_min": [],
+  "shuffle_trajectory_changepoints_min": [],
+  "hmm_n_states": 2,
+  "hmm_activity_n_states": 2,
+  "hmm_n_switches": 3,
+  "shuffle_hmm_n_switches": 1,
+  "n_bins": 5,
+  "n_occupied_bins": 5,
+  "weighted_centroids": true
 }

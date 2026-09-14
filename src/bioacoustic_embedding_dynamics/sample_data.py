@@ -19,7 +19,7 @@ REGIME_C = ["Pteroglossus torquatus", "Catharus ustulatus", "Momotus momota", "P
 def write_sample_manifest(
     path: Path,
     *,
-    duration_s: float = 3 * 3600.0,
+    duration_s: float = 15 * 60.0,
     seed: int = 42,
     embed_dim: int = 128,
 ) -> None:

@@ -59,53 +59,68 @@ def assert_report(out_dir: Path, label: str) -> dict:
     return summary
 
 
-def test_demo() -> None:
-    print("\n=== TEST 1: demo manifest ===", flush=True)
-    run(
-        [PYTHON, "-m", "bioacoustic_embedding_dynamics.cli", "--make-sample", "--out", "reports/demo", "--seed", "42"],
-        cwd=ROOT,
-    )
-    assert_report(ROOT / "reports/demo", "demo")
-
-
-def _ensure_sample_wav(path: Path) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if path.is_file():
-        return
-    import numpy as np
-    import soundfile as sf
-
-    sr = 48000
-    duration = 120.0  # ~40 BirdNET 3s windows
-    t = np.linspace(0, duration, int(sr * duration), endpoint=False)
-    y = 0.2 * np.sin(2 * np.pi * 880 * t) + 0.05 * np.random.default_rng(0).standard_normal(t.size)
-    sf.write(path, y.astype(np.float32), sr)
-    print(f"Wrote synthetic wav to {path}", flush=True)
-
-
-def test_bmz() -> None:
-    print("\n=== TEST 2: Route B BMZ BirdNET ===", flush=True)
+def _real_birdnet_manifest(manifest: Path, wav: Path) -> None:
     run([PYTHON, "-m", "pip", "install", "-q", "soundfile"], timeout=600)
     run([PYTHON, "-m", "pip", "install", "-q", "bioacoustics-model-zoo[birdnet]"], timeout=1800)
-
-    wav = ROOT / "data/test_audio/sample.wav"
-    if wav.is_file() and wav.stat().st_size > 0:
-        wav.unlink()  # regenerate 120s clip if a short file exists from prior run
-    _ensure_sample_wav(wav)
-
     code = f"""
 from pathlib import Path
 from bioacoustic_embedding_dynamics.adapters import bmz_birdnet_to_manifest
 
-manifest = Path("data/bmz_birdnet.jsonl")
-bmz_birdnet_to_manifest([r"{wav}"], manifest, batch_size=8, min_confidence=0.0)
+manifest = Path({str(manifest)!r})
+bmz_birdnet_to_manifest([Path({str(wav)!r})], manifest, batch_size=8, min_confidence=0.0)
 print("manifest lines:", sum(1 for _ in manifest.open()))
+print("wav:", {str(wav)!r})
 """
     run([PYTHON, "-c", code], cwd=ROOT, timeout=1800)
+
+
+def _analysis(manifest: Path, out: Path) -> None:
     run(
-        [PYTHON, "-m", "bioacoustic_embedding_dynamics.cli", "--manifest", "data/bmz_birdnet.jsonl", "--out", "reports/bmz", "--seed", "42"],
+        [
+            PYTHON,
+            "-m",
+            "bioacoustic_embedding_dynamics.cli",
+            "--manifest",
+            str(manifest.relative_to(ROOT)),
+            "--out",
+            str(out.relative_to(ROOT)),
+            "--seed",
+            "42",
+            "--bin-s",
+            "15",
+        ],
         cwd=ROOT,
     )
+
+
+def test_demo() -> None:
+    print("\n=== TEST 1: demo — BMZ BirdNET on bacpipe test wav ===", flush=True)
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from colab_wav_source import bacpipe_test_wav, install_bacpipe_for_test_wav
+
+    install_bacpipe_for_test_wav()
+    wav = bacpipe_test_wav()
+    print("test wav:", wav, flush=True)
+    manifest = ROOT / "data/demo_birdnet.jsonl"
+    _real_birdnet_manifest(manifest, wav)
+    _analysis(manifest, ROOT / "reports/demo")
+    summary = assert_report(ROOT / "reports/demo", "demo")
+    if summary.get("synthesized_embeddings"):
+        raise SystemExit("[demo] expected real BirdNET embeddings")
+    if int(summary.get("embed_dim") or 0) < 256:
+        raise SystemExit(f"[demo] bad embed_dim: {summary.get('embed_dim')}")
+
+
+def test_bmz() -> None:
+    print("\n=== TEST 2: Route B — same short real wav ===", flush=True)
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from colab_wav_source import bacpipe_test_wav, install_bacpipe_for_test_wav
+
+    install_bacpipe_for_test_wav()
+    wav = bacpipe_test_wav()
+    manifest = ROOT / "data/bmz_birdnet.jsonl"
+    _real_birdnet_manifest(manifest, wav)
+    _analysis(manifest, ROOT / "reports/bmz")
     summary = assert_report(ROOT / "reports/bmz", "bmz")
     if summary.get("synthesized_embeddings"):
         raise SystemExit("[bmz] expected real BirdNET embeddings")
