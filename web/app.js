@@ -4,6 +4,20 @@ const COLAB = {
   b: "https://colab.research.google.com/github/ST-48-1240162/bioacoustic-embedding-dynamics/blob/main/docs/Route_B_BMZ_Colab.ipynb",
 };
 
+function makeColabIcon() {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 16 16");
+  svg.setAttribute("aria-hidden", "true");
+  svg.classList.add("icon-colab");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute(
+    "d",
+    "M4.25 2h5.5L12 4.25V12a1 1 0 0 1-1 1H4.25a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zm5.25.6V5H11M6.2 8.1v3.1l3.1-1.55L6.2 8.1z"
+  );
+  svg.appendChild(path);
+  return svg;
+}
+
 const MATH = {
   goal: [
     String.raw`\text{question: does the cloud } \{\mathbf{x}_i\} \text{ move along the recording?}`,
@@ -976,11 +990,12 @@ function renderCopy() {
     group.appendChild(b);
     if (r.href) {
       const a = document.createElement("a");
-      a.className = "lite-chip-btn run-colab-link";
+      a.className = "run-colab-link";
       a.href = r.href;
       a.target = "_blank";
       a.rel = "noopener noreferrer";
-      a.textContent = "Colab";
+      a.setAttribute("aria-label", `Open ${r.label} notebook in Colab`);
+      a.appendChild(makeColabIcon());
       group.appendChild(a);
     }
     runChips.appendChild(group);
