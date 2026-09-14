@@ -14,4 +14,4 @@ reports/**/*.csv
 !reports/.gitkeep
 
 # nested colab dump; duplicate of reports/colab-fast-test
-reports/colab-fast-test/colab-fast-test/
+.vercel

@@ -10,6 +10,7 @@ If a row has no `embedding`, a small PyTorch mapper synthesizes one for the demo
 **Route A (bacpipe, T4):** [docs/Route_A_Bacpipe_Colab.ipynb](docs/Route_A_Bacpipe_Colab.ipynb)
 **Route B (BMZ):** [docs/Route_B_BMZ_Colab.ipynb](docs/Route_B_BMZ_Colab.ipynb)
 **Walkthrough:** [docs/COLAB.md](docs/COLAB.md)
+**Colab explainer (page):** [web/](web/)
 
 ## What runs where
 

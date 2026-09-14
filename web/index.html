@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>bioacoustic-embedding-dynamics</title>
+    <meta
+      name="description"
+      content="What the Colab notebooks do: detections, BirdNET embeddings, trajectory, change-points, HMM, shuffle control."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="thoth-page" data-theme="light">
+    <div class="thoth-page-shell">
+      <header class="topbar">
+        <div>
+          <p class="thoth-section-label" data-i="kicker">colab walkthrough</p>
+          <h1>bioacoustic-embedding-dynamics</h1>
+          <p class="lede" data-i="lede"></p>
+        </div>
+        <div class="chip-row" role="toolbar" aria-label="page">
+          <button type="button" class="lite-chip-btn" id="lang-btn" aria-pressed="false">中文</button>
+          <button type="button" class="lite-chip-btn" id="theme-btn" aria-pressed="false">dark</button>
+          <a class="lite-chip-btn" href="https://colab.research.google.com/github/ST-48-1240162/bioacoustic-embedding-dynamics/blob/main/docs/Demo_Colab.ipynb">Colab</a>
+          <a class="lite-chip-btn" href="https://github.com/ST-48-1240162/bioacoustic-embedding-dynamics">GitHub</a>
+        </div>
+      </header>
+
+      <section class="thoth-section reading-body">
+        <p class="thoth-section-label" data-i="ask_label"></p>
+        <h2 data-i="ask_h"></h2>
+        <p data-i="ask_p"></p>
+      </section>
+
+      <section class="thoth-section">
+        <p class="thoth-section-label" data-i="walk_label"></p>
+        <div class="chip-row" id="step-chips" role="tablist"></div>
+        <div class="walk" style="margin-top: 0.9rem">
+          <div class="stage">
+            <canvas id="viz" width="720" height="352" aria-label="pipeline sketch"></canvas>
+          </div>
+          <div class="copy-pane reading-body">
+            <p class="kicker" id="step-file"></p>
+            <h3 id="step-title"></h3>
+            <p id="step-body"></p>
+            <div class="nav-row">
+              <button type="button" class="lite-chip-btn" id="prev-btn"></button>
+              <button type="button" class="lite-chip-btn" id="next-btn"></button>
+            </div>
+            <p class="hint" data-i="keys"></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="thoth-section">
+        <p class="thoth-section-label" data-i="fig_label"></p>
+        <h2 data-i="fig_h"></h2>
+        <div class="figure-grid" id="fig-chips"></div>
+        <div class="figure-detail reading-body">
+          <h3 id="fig-title"></h3>
+          <p id="fig-body"></p>
+        </div>
+      </section>
+
+      <section class="thoth-section">
+        <p class="thoth-section-label" data-i="nb_label"></p>
+        <h2 data-i="nb_h"></h2>
+        <div id="nb-list"></div>
+      </section>
+
+      <p class="foot">GPL-3.0-or-later · Runtime, Run all · seed 42</p>
+    </div>
+    <script src="./app.js"></script>
+  </body>
+</html>

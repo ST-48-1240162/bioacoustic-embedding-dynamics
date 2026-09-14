@@ -1,0 +1,349 @@
+:root {
+  --lib-rubric-d: #d4563f;
+  --lib-nacht-d: #8ba3bd;
+  --lib-gold-d: #c4a55a;
+  --lib-rubric-l: #9a2818;
+  --lib-nacht-l: #3d5872;
+  --lib-gold-l: #6f5720;
+  --tl-comment-gold: #c49a1a;
+
+  --bg: #f7f7f5;
+  --bg-high: #efefeb;
+  --bg-input: #fafaf8;
+  --fg: #181816;
+  --fg-title: #10100e;
+  --fg-dim: #666662;
+  --fg-second: #3a3a37;
+  --fg-second-dim: #82827c;
+  --fg-green: #0a9a48;
+  --link: #2f5fb8;
+  --link-hover: #3f74cf;
+
+  --chip-flat-bg: #e6e6e0;
+  --chip-flat-fg: #181816;
+  --chip-hover-bg: #d9d9d2;
+  --chip-on-bg: #232320;
+  --chip-on-fg: #fafaf8;
+
+  --thoth-link: color-mix(in srgb, var(--lib-nacht-l) 58%, var(--link) 42%);
+  --thoth-link-hover: color-mix(in srgb, var(--lib-gold-l) 50%, var(--lib-rubric-l) 50%);
+  --thoth-link-underline: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--lib-gold-l) 88%, var(--fg) 12%),
+    color-mix(in srgb, var(--lib-nacht-l) 82%, var(--link) 18%)
+  );
+  --thoth-link-underline-hover: linear-gradient(
+    90deg,
+    var(--lib-gold-l),
+    color-mix(in srgb, var(--lib-rubric-l) 72%, var(--lib-gold-l) 28%)
+  );
+
+  --font-ui: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-heading: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+[data-theme="dark"] {
+  --tl-comment-gold: #e8c04a;
+  --bg: #131312;
+  --bg-high: #1c1c1a;
+  --bg-input: #171716;
+  --fg: #f2f1ec;
+  --fg-title: #faf9f5;
+  --fg-dim: #a6a59f;
+  --fg-second: #cbcac4;
+  --fg-second-dim: #919088;
+  --fg-green: #7ecf98;
+  --link: #9ebbe0;
+  --link-hover: #c5daf0;
+  --chip-flat-bg: #2b2b28;
+  --chip-flat-fg: #ecebe6;
+  --chip-hover-bg: #363633;
+  --chip-on-bg: #ecebe6;
+  --chip-on-fg: #131312;
+  --thoth-link: color-mix(in srgb, var(--lib-nacht-d) 42%, var(--link) 58%);
+  --thoth-link-hover: color-mix(in srgb, var(--lib-gold-d) 55%, var(--link-hover) 45%);
+  --thoth-link-underline: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--lib-gold-d) 88%, var(--fg) 12%),
+    color-mix(in srgb, var(--lib-nacht-d) 82%, var(--link) 18%)
+  );
+  --thoth-link-underline-hover: linear-gradient(
+    90deg,
+    var(--lib-gold-d),
+    color-mix(in srgb, var(--lib-rubric-d) 72%, var(--lib-gold-d) 28%)
+  );
+}
+
+.thoth-page-shell {
+  --lib-nacht: var(--lib-nacht-l);
+  --lib-rubric: var(--lib-rubric-l);
+  --lib-gold: var(--lib-gold-l);
+  --lib-ink: var(--fg);
+  --lib-faint: var(--fg-second-dim);
+  --lib-card: var(--bg-high);
+}
+
+[data-theme="dark"] .thoth-page-shell {
+  --lib-nacht: var(--lib-nacht-d);
+  --lib-rubric: var(--lib-rubric-d);
+  --lib-gold: var(--lib-gold-d);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+body {
+  min-height: 100vh;
+}
+
+.thoth-page-shell {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0 1rem 3rem;
+}
+
+.topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem 0 0.5rem;
+  flex-wrap: wrap;
+}
+
+h1 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+  color: var(--fg-title);
+  margin: 0;
+}
+
+.lede {
+  margin: 0.35rem 0 0;
+  color: var(--fg-second);
+  max-width: 42rem;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.lite-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.8em;
+  padding: 2px 8px;
+  background: var(--chip-flat-bg);
+  border: none;
+  border-radius: 0;
+  color: var(--chip-flat-fg);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 70ms, color 70ms;
+  vertical-align: middle;
+}
+
+.lite-chip-btn:hover {
+  background: var(--chip-hover-bg);
+}
+
+.lite-chip-btn.is-on {
+  background: var(--chip-on-bg);
+  color: var(--chip-on-fg);
+}
+
+.lite-chip-btn:focus-visible {
+  outline: 1px solid color-mix(in srgb, var(--lib-gold) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.thoth-section-label {
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  color: var(--lib-faint);
+  margin: 0 0 0.65rem;
+  text-transform: lowercase;
+}
+
+.thoth-section {
+  background: var(--lib-card);
+  padding: 1.15rem 1.25rem;
+  margin-top: 1.25rem;
+}
+
+h2 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--lib-rubric);
+  margin: 0 0 0.55rem;
+}
+
+h3 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--lib-nacht);
+  margin: 0 0 0.4rem;
+}
+
+p {
+  margin: 0 0 0.7rem;
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+.reading-body a:not(.lite-chip-btn):not(.file-link) {
+  color: var(--thoth-link);
+  text-decoration: none;
+  background-image: var(--thoth-link-underline);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 1px;
+}
+
+.reading-body a:not(.lite-chip-btn):not(.file-link):hover {
+  color: var(--thoth-link-hover);
+  background-image: var(--thoth-link-underline-hover);
+  background-size: 100% 2px;
+}
+
+.walk {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(16rem, 0.85fr);
+  gap: 1rem;
+  align-items: stretch;
+}
+
+@media (max-width: 860px) {
+  .walk {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stage {
+  background: color-mix(in srgb, var(--fg) 4.5%, transparent);
+  min-height: 22rem;
+  position: relative;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 22rem;
+}
+
+.copy-pane h3 {
+  margin-top: 0.2rem;
+}
+
+.kicker {
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  color: var(--lib-gold);
+  margin: 0 0 0.35rem;
+}
+
+.nav-row {
+  display: flex;
+  gap: 0.35rem;
+  margin-top: 1rem;
+}
+
+.figure-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.35rem;
+  margin: 0.75rem 0 1rem;
+}
+
+.figure-detail {
+  background: color-mix(in srgb, var(--fg) 4.5%, transparent);
+  padding: 0.9rem 1rem;
+  min-height: 6.5rem;
+}
+
+.nb-row {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr auto;
+  gap: 0.75rem;
+  padding: 0.65rem 0.15rem;
+  align-items: baseline;
+}
+
+.nb-row:nth-child(even) {
+  background: color-mix(in srgb, var(--fg) 3.5%, transparent);
+}
+
+.nb-name {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  color: var(--lib-nacht);
+}
+
+.nb-meta {
+  color: var(--fg-dim);
+  font-size: 0.92em;
+}
+
+.foot {
+  margin-top: 1.75rem;
+  color: var(--fg-dim);
+  font-size: 0.85em;
+}
+
+code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.86em;
+  background: color-mix(in srgb, var(--fg-dim) 12%, var(--bg-high));
+  padding: 0.05em 0.3em;
+}
+
+.hint {
+  color: var(--fg-dim);
+  font-size: 0.85em;
+  margin-top: 0.55rem;
+}
+
+@media (max-width: 640px) {
+  .nb-row {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+  }
+  .nb-name {
+    grid-column: 1;
+  }
+  .nb-meta {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lite-chip-btn {
+    transition: none;
+  }
+}
