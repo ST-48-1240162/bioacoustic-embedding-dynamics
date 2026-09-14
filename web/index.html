@@ -6,7 +6,7 @@
     <title>bioacoustic-embedding-dynamics</title>
     <meta
       name="description"
-      content="Colab notebooks that plot BirdNET embeddings over a recording."
+      content="Colab walkthrough: BirdNET embeddings, PCA, UMAP, binned trajectories, change-points, and HMM regimes."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -26,10 +26,7 @@
         <div>
           <p class="thoth-section-label" data-i="kicker">colab walkthrough</p>
           <h1>bioacoustic-embedding-dynamics</h1>
-          <p class="lede" data-i="lede">
-            Runtime, Run all. The notebook clones this repo, writes a sample detection JSONL or
-            loads yours, and plots the embedding vectors for the length of the recording.
-          </p>
+          <p class="lede" data-i="lede"></p>
         </div>
         <div class="chip-row" role="toolbar" aria-label="page">
           <button
@@ -83,7 +80,8 @@
           <div class="copy-pane reading-body">
             <p class="kicker" id="step-file"></p>
             <h3 id="step-title"></h3>
-            <p id="step-body"></p>
+            <div id="step-body"></div>
+            <p class="hint" id="step-fig-gap" hidden></p>
             <div class="math-block" id="step-math" hidden></div>
             <div class="nav-row">
               <button type="button" class="lite-chip-btn" id="prev-btn">prev</button>
@@ -108,7 +106,7 @@
             <p class="hint" id="fig-missing" hidden></p>
             <div class="figure-caption reading-body">
               <p class="kicker" id="fig-file"></p>
-              <p id="fig-body"></p>
+              <div id="fig-body"></div>
               <div class="math-block" id="fig-math" hidden></div>
             </div>
           </div>

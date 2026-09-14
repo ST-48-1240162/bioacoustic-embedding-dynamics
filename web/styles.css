@@ -316,6 +316,16 @@ canvas {
   margin-top: 0.2rem;
 }
 
+#step-body p,
+#fig-body p {
+  margin-bottom: 0.45rem;
+}
+
+#step-fig-gap {
+  margin-top: 0.55rem;
+  color: var(--fg-second);
+}
+
 .kicker {
   font-family: var(--font-heading);
   font-size: 0.72rem;

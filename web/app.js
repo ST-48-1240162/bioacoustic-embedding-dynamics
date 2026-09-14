@@ -132,7 +132,8 @@ const COPY = {
     fig_label: "reports/",
     fig_h: "Output figures",
     fig_note: "Demo uses $\\Delta t=15\\,\\mathrm{s}$ bins on the bacpipe test wav ($\\sim 1\\,\\mathrm{min}$, $n=22$ detections, five occupied bins). Route A and Route B site bundles only include PCA and UMAP (default $\\Delta t=60\\,\\mathrm{s}$ on that clip).",
-    fig_missing: "This PNG is not in the site bundle. Colab still writes it on Run all.",
+    fig_missing: "This PNG is not in the site bundle for the selected run. Switch to Demo or run Colab to generate it.",
+    step_fig_gap: "The figure for this pipeline step is only bundled under Demo ($\\Delta t=15\\,\\mathrm{s}$). Route A/B site PNGs stop at PCA and UMAP.",
     runs: [
       { id: "demo", label: "Demo" },
       { id: "bmz", label: "Route B" },
@@ -198,7 +199,7 @@ const COPY = {
         title: "Two HMMs",
         body: [
           "A diagonal Gaussian HMM assigns each bin a hidden state $s_t$. Transitions are Markov; emissions are Gaussian in the chosen features.",
-          "Top row: states on $(c_b^{(1)},c_b^{(2)})$ centroids (embedding regimes). Bottom row: states on standardized $(r_b,R_b,\\bar{c}_b)$. State IDs $0,1,2$ are arbitrary labels.",
+          "Top row: states on $(c_b^{(1)},c_b^{(2)})$ centroids (embedding regimes). Bottom row: states on standardized $(r_b,R_b,\\bar{c}_b)$. State IDs are arbitrary labels ($2$–$3$ states depending on bin count).",
           "$N_{\\mathrm{sw}}$ in summary.json counts how often the embedding HMM switches state along the timeline.",
         ],
         math: MATH.hmm,
@@ -507,36 +508,6 @@ function draw() {
 
   setVizLabels(false, null, null);
 
-  if (step === 0) {
-    setVizLabels(true, "\\mathrm{PC2}", "\\mathrm{PC1}");
-    DATA.points.forEach((p) => {
-      ctx.globalAlpha = 0.22;
-      ctx.fillStyle = cssColor(SPECIES_COLOR[p.sp]);
-      ctx.fillRect(sx(p.x) - 2, sy(p.y) - 2, 4, 4);
-    });
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = ink;
-    ctx.font = "600 14px Manrope, system-ui, sans-serif";
-    ctx.fillText("just the detections so far", pad, h - 14);
-    return;
-  }
-
-  if (step === 1) {
-    setVizLabels(true, null, "t");
-    DATA.points.forEach((p) => {
-      ctx.fillStyle = cssColor(SPECIES_COLOR[p.sp]);
-      ctx.globalAlpha = 0.85;
-      ctx.fillRect(pad + p.t * plotW, 40 + p.regime * 70, 3, 36);
-    });
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = faint;
-    ["0", "1", "2"].forEach((r, i) => {
-      ctx.fillStyle = faint;
-      ctx.fillText(`regime ${r}`, pad, 36 + i * 70);
-    });
-    return;
-  }
-
   function drawScatter(alpha) {
     DATA.points.forEach((p) => {
       ctx.globalAlpha = alpha;
@@ -574,6 +545,30 @@ function draw() {
         ctx.fillRect(sx(b.x) - 4, sy(b.y) - 4, 8, 8);
       }
     });
+  }
+
+  if (step === 0) {
+    setVizLabels(true, null, "\\mathrm{start\\_s}");
+    const laneY = h * 0.42;
+    DATA.points.forEach((p) => {
+      ctx.fillStyle = cssColor(SPECIES_COLOR[p.sp]);
+      ctx.globalAlpha = 0.9;
+      ctx.fillRect(pad + p.t * plotW, laneY, 3, 36);
+    });
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = faint;
+    ctx.font = "11px Manrope, system-ui, sans-serif";
+    ctx.fillText("JSONL manifest: one mark per detection (color = species)", pad, h - 10);
+    return;
+  }
+
+  if (step === 1) {
+    setVizLabels(true, "\\mathrm{PC2}", "\\mathrm{PC1}");
+    drawScatter(0.85);
+    ctx.fillStyle = faint;
+    ctx.font = "11px Manrope, system-ui, sans-serif";
+    ctx.fillText("BirdNET attaches a 1024-d vector to each detection (cartoon PC view)", pad, h - 10);
+    return;
   }
 
   if (step === 2) {
@@ -624,8 +619,7 @@ function draw() {
     return;
   }
 
-  if (step === 4 || step === 6) {
-    setVizLabels(true, "\\mathrm{PC2}", "\\mathrm{PC1}");
+  if (step === 4) {
     drawScatter(0.18);
     drawCentroidPath(occ);
     const base = h - 52;
@@ -636,8 +630,7 @@ function draw() {
       ctx.fillStyle = faint;
       ctx.fillRect(x, base - bh, plotW / useBins.length - 1, bh);
     });
-    const breaks = step === 6 ? [] : [8, 16];
-    breaks.forEach((i) => {
+    [8, 16].forEach((i) => {
       const x = pad + (i / useBins.length) * plotW;
       ctx.strokeStyle = rubric;
       ctx.setLineDash([4, 3]);
@@ -649,7 +642,73 @@ function draw() {
     });
     ctx.fillStyle = faint;
     ctx.font = "11px Manrope, system-ui, sans-serif";
-    ctx.fillText("calls per bin, empty bins included", pad, h - 8);
+    ctx.fillText("top: PC centroid path; bottom: r_b with PELT breaks (red)", pad, h - 8);
+    setVizLabels(true, "r_b", "t");
+    return;
+  }
+
+  if (step === 6) {
+    const mid = pad + plotW * 0.5;
+    const halfW = plotW * 0.46;
+    const sxL = (x) => pad + x * halfW;
+    const sxR = (x) => mid + 10 + x * halfW;
+
+    ctx.strokeStyle = faint;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(mid, pad);
+    ctx.lineTo(mid, h - 52);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    drawScatter(0.12);
+
+    function drawHalfCentroids(occ, sxFn) {
+      if (!occ.length) return;
+      ctx.beginPath();
+      occ.forEach((b, i) => {
+        const px = sxFn(b.x);
+        const py = sy(b.y);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      });
+      ctx.strokeStyle = faint;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      occ.forEach((b) => {
+        ctx.fillStyle = ink;
+        ctx.fillRect(sxFn(b.x) - 3, sy(b.y) - 3, 6, 6);
+      });
+    }
+
+    const occOrig = DATA.bins.filter((b) => b.x != null);
+    const occShuf = DATA.shufBins.filter((b) => b.x != null);
+    drawHalfCentroids(occOrig, sxL);
+    drawHalfCentroids(occShuf, sxR);
+
+    ctx.fillStyle = faint;
+    ctx.font = "10px Manrope, system-ui, sans-serif";
+    ctx.fillText("original times", pad + 4, pad + 12);
+    ctx.fillText("shuffled start_s", mid + 10, pad + 12);
+
+    const base = h - 52;
+    const maxR = Math.max(...DATA.bins.map((b) => b.rate), ...DATA.shufBins.map((b) => b.rate), 1);
+    DATA.bins.forEach((b, i) => {
+      const x = pad + (i / DATA.bins.length) * halfW;
+      const bh = (b.rate / maxR) * 28;
+      ctx.fillStyle = faint;
+      ctx.fillRect(x, base - bh, halfW / DATA.bins.length - 1, bh);
+    });
+    DATA.shufBins.forEach((b, i) => {
+      const x = mid + 10 + (i / DATA.shufBins.length) * halfW;
+      const bh = (b.rate / maxR) * 28;
+      ctx.fillStyle = faint;
+      ctx.fillRect(x, base - bh, halfW / DATA.shufBins.length - 1, bh);
+    });
+
+    ctx.fillStyle = faint;
+    ctx.font = "11px Manrope, system-ui, sans-serif";
+    ctx.fillText("same embeddings; permuted times on the right", pad, h - 8);
     setVizLabels(true, "r_b", "t");
     return;
   }
@@ -771,6 +830,15 @@ function renderCopy() {
   setParagraphs(document.getElementById("step-body"), s.body);
   renderMath(document.getElementById("step-math"), s.math);
 
+  const stepFigId = STEP_FIG_ID[step];
+  const stepGap = document.getElementById("step-fig-gap");
+  const figsForStepCheck = figsForRun(runId);
+  if (stepGap) {
+    const missingStepFig = stepFigId && !figsForStepCheck.some((f) => f.id === stepFigId);
+    stepGap.hidden = !missingStepFig;
+    if (missingStepFig) setRichText(stepGap, c.step_fig_gap);
+  }
+
   const runChips = document.getElementById("run-chips");
   runChips.replaceChildren();
   c.runs.forEach((r) => {
@@ -822,10 +890,22 @@ function renderCopy() {
   const img = document.getElementById("fig-img");
   const frame = document.getElementById("fig-frame");
   const miss = document.getElementById("fig-missing");
-  img.src = `./reports/${runId}/${chosen.id}`;
   img.alt = chosen.title;
+  img.onload = () => {
+    img.hidden = false;
+    frame.classList.remove("is-empty");
+    miss.hidden = true;
+  };
+  img.onerror = () => {
+    img.hidden = true;
+    frame.classList.add("is-empty");
+    miss.hidden = false;
+    setRichText(miss, c.fig_missing);
+  };
+  img.hidden = false;
   frame.classList.remove("is-empty");
   miss.hidden = true;
+  img.src = `./reports/${runId}/${chosen.id}?v=${chosen.id}`;
 
   const nb = document.getElementById("nb-list");
   nb.replaceChildren();
