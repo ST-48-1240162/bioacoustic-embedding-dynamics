@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# generated plots/tables (keep reports/.gitkeep and optional summary.json)
+reports/**/*.png
+reports/**/*.csv
+!reports/.gitkeep
+
+# nested colab dump; duplicate of reports/colab-fast-test
+reports/colab-fast-test/colab-fast-test/

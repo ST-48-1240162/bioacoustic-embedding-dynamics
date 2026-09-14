@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bioacoustic-embedding-dynamics"
+version = "0.2.0"
+description = "PCA/UMAP, trajectory analysis, change-point, and HMM on high-dimensional bioacoustic embeddings"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "GPL-3.0-or-later" }
+authors = [{ name = "Gewenxin Yu" }]
+dependencies = [
+  "numpy>=2.2.2,<2.3",
+  "pandas>=2.2,<3",
+  "scikit-learn>=1.5,<2",
+  "matplotlib>=3.8,<4",
+  "umap-learn>=0.5.6,<0.6",
+  "ruptures>=1.1.9,<2",
+  "hmmlearn>=0.3.3,<0.4",
+  "torch>=2.2,<3",
+]
+
+[project.optional-dependencies]
+audio = [
+  "librosa>=0.10.1,<0.12.0",
+  "soundfile>=0.12.1",
+]
+bacpipe = [
+  "bacpipe",
+]
+bmz = [
+  "bioacoustics-model-zoo[birdnet]",
+]
+
+[project.scripts]
+bioacoustic-embedding-dynamics = "bioacoustic_embedding_dynamics.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bioacoustic_embedding_dynamics"]

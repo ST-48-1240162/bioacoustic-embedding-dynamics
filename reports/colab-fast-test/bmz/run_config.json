@@ -1,0 +1,14 @@
+{
+  "manifest": "data/bmz_birdnet.jsonl",
+  "out_dir": "reports/bmz",
+  "seed": 42,
+  "embed_dim": 128,
+  "bin_s": 60.0,
+  "changepoint_pen": 3.0,
+  "hmm_states": 3,
+  "umap_neighbors": 15,
+  "synthesized_embeddings": false,
+  "created_at_utc": "2026-09-14T02:07:31.586781+00:00",
+  "framework": "pytorch+sklearn",
+  "target_role": "KwF NLP/ML Bioacoustics & Conservation"
+}

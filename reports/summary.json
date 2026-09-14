@@ -1,0 +1,26 @@
+{
+  "n_detections": 61,
+  "embed_dim": 128,
+  "synthesized_embeddings": false,
+  "duration_min": 176.4,
+  "pca_explained_variance": [
+    0.1342,
+    0.1047
+  ],
+  "embedding_geometry": {
+    "intra_cosine_dist_mean": 0.4156,
+    "inter_cosine_dist_mean": 0.9109,
+    "separation_ratio": 2.192
+  },
+  "trajectory": {
+    "path_length": 295.5768,
+    "mean_step_velocity": 5.7956,
+    "max_step_velocity": 12.5338,
+    "turning_angle_mean_deg": 123.26
+  },
+  "changepoints_min": [],
+  "trajectory_changepoints_min": [
+    115.92
+  ],
+  "hmm_n_states": 3
+}
