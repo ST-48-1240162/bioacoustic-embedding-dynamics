@@ -178,28 +178,34 @@ h1 {
 }
 
 .icon-chip {
-  width: 1.7rem;
-  height: 1.7rem;
+  flex-shrink: 0;
+  width: 1.85rem;
+  height: 1.85rem;
   padding: 0;
   justify-content: center;
+  line-height: 0;
 }
 
 .icon-chip svg {
-  display: block;
   width: 0.95rem;
   height: 0.95rem;
   fill: currentColor;
+  stroke: none;
 }
 
-.icon-sun {
+.icon-chip .icon-moon {
+  display: block;
+}
+
+.icon-chip .icon-sun {
   display: none;
 }
 
-[data-theme="dark"] .icon-moon {
+[data-theme="dark"] .icon-chip .icon-moon {
   display: none;
 }
 
-[data-theme="dark"] .icon-sun {
+[data-theme="dark"] .icon-chip .icon-sun {
   display: block;
 }
 
