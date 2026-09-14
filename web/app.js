@@ -70,7 +70,11 @@ const MATH = {
 const COPY = {
     kicker: "colab walkthrough",
     lede: "Runtime, Run all. The notebook clones this repo, runs BirdNET on a short real clip (or your manifest), and plots how embedding geometry changes along the recording.",
-    ask_label: "what it is doing",
+    intro_label: "intro",
+    intro_tabs: [
+      { id: "overview", label: "overview" },
+      { id: "concepts", label: "concepts" },
+    ],
     ask_h: "Embeddings during the recording",
     ask_p: [
       "BirdNET names the species and emits a $1024$-d vector $\\mathbf{x}_i$ for each detection window. Most workflows stop at species counts or occupancy tables.",
@@ -78,7 +82,6 @@ const COPY = {
       "Demo, Route A, and Route B all use real BirdNET embeddings on the bacpipe test wav ($\\sim 1\\,\\mathrm{min}$). The demo notebook uses $\\Delta t=15\\,\\mathrm{s}$ bins so short clips still get several timeline points.",
     ],
     ask_math: MATH.goal,
-    concepts_label: "concepts",
     concepts_h: "Notation and objects",
     concepts_lede: "Symbols below match the code and summary.json. Click a pipeline step or figure for the same formulas in context.",
     concepts: [
@@ -448,6 +451,7 @@ const SPECIES_COLOR = {
 let step = 0;
 let figIdx = 0;
 let runId = "demo";
+let introTab = "overview";
 
 function cssColor(name) {
   const shell = document.querySelector(".thoth-page-shell");
@@ -806,6 +810,35 @@ function setParagraphs(el, body) {
   });
 }
 
+function renderIntroTabs() {
+  const tabs = document.getElementById("intro-tabs");
+  const overview = document.getElementById("intro-panel-overview");
+  const concepts = document.getElementById("intro-panel-concepts");
+  if (!tabs || !overview || !concepts) return;
+
+  tabs.replaceChildren();
+  COPY.intro_tabs.forEach((t) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "lite-chip-btn" + (t.id === introTab ? " is-on" : "");
+    b.textContent = t.label;
+    b.setAttribute("role", "tab");
+    b.setAttribute("aria-selected", t.id === introTab ? "true" : "false");
+    b.setAttribute("aria-controls", `intro-panel-${t.id}`);
+    b.addEventListener("click", () => {
+      introTab = t.id;
+      renderCopy();
+    });
+    tabs.appendChild(b);
+  });
+
+  const showOverview = introTab === "overview";
+  overview.hidden = !showOverview;
+  concepts.hidden = showOverview;
+  overview.setAttribute("aria-hidden", showOverview ? "false" : "true");
+  concepts.setAttribute("aria-hidden", showOverview ? "true" : "false");
+}
+
 function renderConcepts() {
   const grid = document.getElementById("concept-grid");
   if (!grid) return;
@@ -837,6 +870,7 @@ function renderCopy() {
     const key = el.getAttribute("data-i");
     if (typeof c[key] === "string") setRichText(el, c[key]);
   });
+  renderIntroTabs();
   setParagraphs(document.getElementById("ask-body"), c.ask_p);
   renderMath(document.getElementById("ask-math"), c.ask_math);
   renderConcepts();

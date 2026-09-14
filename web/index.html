@@ -50,17 +50,18 @@
       </header>
 
       <section class="thoth-section reading-body">
-        <p class="thoth-section-label" data-i="ask_label"></p>
-        <h2 data-i="ask_h"></h2>
-        <div id="ask-body"></div>
-        <div class="math-block" id="ask-math" hidden></div>
-      </section>
-
-      <section class="thoth-section reading-body">
-        <p class="thoth-section-label" data-i="concepts_label"></p>
-        <h2 data-i="concepts_h"></h2>
-        <p class="hint" data-i="concepts_lede"></p>
-        <div class="concept-grid" id="concept-grid"></div>
+        <p class="thoth-section-label" data-i="intro_label"></p>
+        <div class="chip-row" id="intro-tabs" role="tablist" aria-label="intro"></div>
+        <div class="intro-panel" id="intro-panel-overview" role="tabpanel">
+          <h2 data-i="ask_h"></h2>
+          <div id="ask-body"></div>
+          <div class="math-block" id="ask-math" hidden></div>
+        </div>
+        <div class="intro-panel" id="intro-panel-concepts" role="tabpanel" hidden>
+          <h2 data-i="concepts_h"></h2>
+          <p class="hint" data-i="concepts_lede"></p>
+          <div class="concept-grid" id="concept-grid"></div>
+        </div>
       </section>
 
       <section class="thoth-section">
