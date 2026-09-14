@@ -17,6 +17,13 @@ const I18N = {
     next: "next",
     fig_label: "reports/",
     fig_h: "Figures the notebook writes",
+    fig_note: "From Colab verification runs. Click a run, then a file. shuffle_null.png is newer than this dump, so it has no PNG here.",
+    fig_missing: "No PNG in this dump. The current notebook still writes it on Run all.",
+    runs: [
+      { id: "demo", label: "Demo" },
+      { id: "bmz", label: "Route B" },
+      { id: "bacpipe", label: "Route A" },
+    ],
     nb_label: "notebooks",
     nb_h: "What to open",
     steps: [
@@ -90,6 +97,13 @@ const I18N = {
     next: "下一步",
     fig_label: "reports/",
     fig_h: "Notebook 写出的图",
+    fig_note: "来自 Colab 验证跑次。先选 Demo / Route B / Route A，再点文件名。shuffle_null.png 是后来加的，这批 dump 里没有图。",
+    fig_missing: "这批 dump 里没有这张 PNG。现在的 notebook Run all 仍会写。",
+    runs: [
+      { id: "demo", label: "Demo" },
+      { id: "bmz", label: "Route B" },
+      { id: "bacpipe", label: "Route A" },
+    ],
     nb_label: "notebook",
     nb_h: "打开哪一份",
     steps: [
@@ -205,6 +219,16 @@ function generate() {
   return { points, bins, shufBins, species };
 }
 
+const HAS_PNG = new Set([
+  "pca_species.png",
+  "umap_species.png",
+  "trajectory_pca.png",
+  "changepoints.png",
+  "trajectory_changepoints.png",
+  "hmm_regimes.png",
+]);
+const STEP_FIG = { 2: 0, 3: 2, 4: 3, 5: 5, 6: 6 };
+
 const DATA = generate();
 const SPECIES_COLOR = {
   A: "var-nacht",
@@ -216,6 +240,7 @@ const SPECIES_COLOR = {
 let lang = "en";
 let step = 0;
 let figIdx = 0;
+let runId = "demo";
 
 function cssColor(name) {
   const shell = document.querySelector(".thoth-page-shell");
@@ -379,13 +404,35 @@ function renderCopy() {
   document.getElementById("step-title").textContent = s.title;
   document.getElementById("step-body").textContent = s.body;
 
+  const runChips = document.getElementById("run-chips");
+  runChips.replaceChildren();
+  c.runs.forEach((r) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "lite-chip-btn" + (r.id === runId ? " is-on" : "");
+    b.textContent = r.label;
+    b.addEventListener("click", () => {
+      runId = r.id;
+      renderCopy();
+    });
+    runChips.appendChild(b);
+  });
+
   const figChips = document.getElementById("fig-chips");
   figChips.replaceChildren();
   c.figs.forEach((f, i) => {
     const b = document.createElement("button");
     b.type = "button";
-    b.className = "lite-chip-btn" + (i === figIdx ? " is-on" : "");
-    b.textContent = f.id;
+    b.className = "fig-thumb" + (i === figIdx ? " is-on" : "");
+    if (HAS_PNG.has(f.id)) {
+      const im = document.createElement("img");
+      im.src = `./reports/${runId}/${f.id}`;
+      im.alt = "";
+      b.appendChild(im);
+    }
+    const cap = document.createElement("span");
+    cap.textContent = f.id;
+    b.appendChild(cap);
     b.addEventListener("click", () => {
       figIdx = i;
       renderCopy();
@@ -394,6 +441,23 @@ function renderCopy() {
   });
   document.getElementById("fig-title").textContent = c.figs[figIdx].title;
   document.getElementById("fig-body").textContent = c.figs[figIdx].body;
+
+  const chosen = c.figs[figIdx];
+  const img = document.getElementById("fig-img");
+  const frame = img.parentElement;
+  const miss = document.getElementById("fig-missing");
+  if (HAS_PNG.has(chosen.id)) {
+    img.src = `./reports/${runId}/${chosen.id}`;
+    img.alt = chosen.id;
+    frame.classList.remove("is-empty");
+    miss.hidden = true;
+  } else {
+    img.removeAttribute("src");
+    img.alt = "";
+    frame.classList.add("is-empty");
+    miss.hidden = false;
+    miss.textContent = c.fig_missing;
+  }
 
   const nb = document.getElementById("nb-list");
   nb.replaceChildren();
@@ -412,6 +476,7 @@ function renderCopy() {
 
 function setStep(i) {
   step = Math.max(0, Math.min(t().steps.length - 1, i));
+  if (STEP_FIG[step] != null) figIdx = STEP_FIG[step];
   renderCopy();
   draw();
 }

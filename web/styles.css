@@ -281,6 +281,62 @@ canvas {
   margin: 0.75rem 0 1rem;
 }
 
+.fig-thumb {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  background: var(--chip-flat-bg);
+  border: none;
+  border-radius: 0;
+  color: var(--chip-flat-fg);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 70ms, color 70ms;
+}
+
+.fig-thumb:hover {
+  background: var(--chip-hover-bg);
+}
+
+.fig-thumb.is-on {
+  background: var(--chip-on-bg);
+  color: var(--chip-on-fg);
+}
+
+.fig-thumb:focus-visible {
+  outline: 1px solid color-mix(in srgb, var(--lib-gold) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.fig-thumb img {
+  display: block;
+  width: 100%;
+  height: 4.6rem;
+  object-fit: cover;
+}
+
+.fig-thumb span {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.72rem;
+  padding: 4px 7px 6px;
+}
+
+.figure-frame {
+  background: color-mix(in srgb, var(--fg) 4.5%, transparent);
+  margin-bottom: 0.75rem;
+}
+
+.figure-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.figure-frame.is-empty {
+  display: none;
+}
+
 .figure-detail {
   background: color-mix(in srgb, var(--fg) 4.5%, transparent);
   padding: 0.9rem 1rem;
