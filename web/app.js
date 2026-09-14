@@ -16,7 +16,7 @@ const COPY = {
     next: "next",
     fig_label: "reports/",
     fig_h: "Output figures",
-    fig_note: "PNGs from Colab test runs. Pick Demo, Route B, or Route A, then a file. shuffle_null.png was added later, so it is missing from this set.",
+    fig_note: "PNGs from Colab test runs. Demo, Route B, or Route A. shuffle_null.png is missing from this set.",
     fig_missing: "This set has no PNG for that file. A current Run all still writes it.",
     runs: [
       { id: "demo", label: "Demo" },
@@ -70,13 +70,13 @@ const COPY = {
       },
     ],
     figs: [
-      { id: "pca_species.png", title: "pca_species.png", body: "One point per detection. Color is species. Axes are the first two principal components of the scaled embedding. Useful if you want to see whether species sit apart. The tick labels are not physical units." },
-      { id: "umap_species.png", title: "umap_species.png", body: "Same points, nonlinear map. Handy if PCA is a blob but local groups still exist. A distance on this plot is not a PCA distance." },
-      { id: "trajectory_pca.png", title: "trajectory_pca.png", body: "Each marker is one minute's confidence-weighted centroid in PC space. Color is HMM state. A long arrow means that minute's average vector moved a long way." },
-      { id: "changepoints.png", title: "changepoints.png", body: "Call rate against minutes, with empty bins at 0. Red dashed lines in the Colab PNG are PELT breaks in how often animals called." },
-      { id: "trajectory_changepoints.png", title: "trajectory_changepoints.png", body: "PC1 of the centroid against minutes. Breaks here are shifts in the average vector. Put changepoints.png next to it." },
-      { id: "hmm_regimes.png", title: "hmm_regimes.png", body: "Top: HMM on embedding centroids. Bottom: HMM on activity stats. They do not have to agree." },
-      { id: "shuffle_null.png", title: "shuffle_null.png", body: "Original times on the left, shuffled start_s on the right. The test is whether the ordered structure survives the permutation." },
+      { id: "pca_species.png", title: "species in PCA", body: "One point per detection. Color is species. Axes are the first two principal components of the scaled embedding. Useful if you want to see whether species sit apart. The tick labels are not physical units." },
+      { id: "umap_species.png", title: "species in UMAP", body: "Same points, nonlinear map. Handy if PCA is a blob but local groups still exist. A distance on this plot is not a PCA distance." },
+      { id: "trajectory_pca.png", title: "minute centroids", body: "Each marker is one minute's confidence-weighted centroid in PC space. Color is HMM state. A long arrow means that minute's average vector moved a long way." },
+      { id: "changepoints.png", title: "call rate", body: "Call rate against minutes, with empty bins at 0. Red dashed lines in the Colab PNG are PELT breaks in how often animals called." },
+      { id: "trajectory_changepoints.png", title: "centroid PC1", body: "PC1 of the centroid against minutes. Breaks here are shifts in the average vector. Put changepoints.png next to it." },
+      { id: "hmm_regimes.png", title: "two HMMs", body: "Top: HMM on embedding centroids. Bottom: HMM on activity stats. They do not have to agree." },
+      { id: "shuffle_null.png", title: "shuffle times", body: "Original times on the left, shuffled start_s on the right. The test is whether the ordered structure survives the permutation." },
     ],
     nbs: [
       { name: "Demo", meta: "CPU, about 2-3 min. Fake 128-d vectors with three planted regimes.", href: COLAB.demo },
@@ -364,37 +364,41 @@ function renderCopy() {
     runChips.appendChild(b);
   });
 
-  const figChips = document.getElementById("fig-chips");
-  figChips.replaceChildren();
+  const figList = document.getElementById("fig-list");
+  figList.replaceChildren();
   c.figs.forEach((f, i) => {
     const b = document.createElement("button");
     b.type = "button";
-    b.className = "fig-thumb" + (i === figIdx ? " is-on" : "");
-    if (HAS_PNG.has(f.id)) {
-      const im = document.createElement("img");
-      im.src = `./reports/${runId}/${f.id}`;
-      im.alt = "";
-      b.appendChild(im);
+    b.className = "fig-item" + (i === figIdx ? " is-on" : "");
+    b.setAttribute("role", "tab");
+    b.setAttribute("aria-selected", i === figIdx ? "true" : "false");
+    const name = document.createElement("span");
+    name.className = "fig-item-name";
+    name.textContent = f.title;
+    b.appendChild(name);
+    if (i === figIdx) {
+      const body = document.createElement("span");
+      body.className = "fig-item-body";
+      body.textContent = f.body;
+      b.appendChild(body);
     }
-    const cap = document.createElement("span");
-    cap.textContent = f.id;
-    b.appendChild(cap);
     b.addEventListener("click", () => {
       figIdx = i;
       renderCopy();
     });
-    figChips.appendChild(b);
+    figList.appendChild(b);
   });
-  document.getElementById("fig-title").textContent = c.figs[figIdx].title;
-  document.getElementById("fig-body").textContent = c.figs[figIdx].body;
 
   const chosen = c.figs[figIdx];
+  document.getElementById("fig-file").textContent = chosen.id;
+  document.getElementById("fig-body").textContent = chosen.body;
+
   const img = document.getElementById("fig-img");
-  const frame = img.parentElement;
+  const frame = document.getElementById("fig-frame");
   const miss = document.getElementById("fig-missing");
   if (HAS_PNG.has(chosen.id)) {
     img.src = `./reports/${runId}/${chosen.id}`;
-    img.alt = chosen.id;
+    img.alt = chosen.title;
     frame.classList.remove("is-empty");
     miss.hidden = true;
   } else {
