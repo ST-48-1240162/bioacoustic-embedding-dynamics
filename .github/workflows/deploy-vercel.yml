@@ -1,0 +1,19 @@
+name: deploy vercel
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "scripts/vercel_deploy_web.py"
+      - ".github/workflows/deploy-vercel.yml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: deploy web to vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: python3 scripts/vercel_deploy_web.py
