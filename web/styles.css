@@ -177,6 +177,32 @@ h1 {
   outline-offset: 2px;
 }
 
+.icon-chip {
+  width: 1.7rem;
+  height: 1.7rem;
+  padding: 0;
+  justify-content: center;
+}
+
+.icon-chip svg {
+  display: block;
+  width: 0.95rem;
+  height: 0.95rem;
+  fill: currentColor;
+}
+
+.icon-sun {
+  display: none;
+}
+
+[data-theme="dark"] .icon-moon {
+  display: none;
+}
+
+[data-theme="dark"] .icon-sun {
+  display: block;
+}
+
 .thoth-section-label {
   font-family: var(--font-heading);
   font-size: 0.72rem;
