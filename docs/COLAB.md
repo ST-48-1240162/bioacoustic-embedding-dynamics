@@ -1,54 +1,64 @@
-NAME
-    Colab usage for bioacoustic-embedding-dynamics
+# Colab
 
-SYNOPSIS
-    colab new -s SESSION
-    colab exec -s SESSION --timeout 3600 -f scripts/colab_run_fast_tests.py
+CPU is enough for the demo (~2-3 min) and for Route B. Use a T4 for Route A (bacpipe).
 
-NOTEBOOKS
-    Demo_Colab.ipynb
-        Demo manifest. CPU is enough (about 2-3 minutes).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ST-48-1240162/bioacoustic-embedding-dynamics/blob/main/docs/Demo_Colab.ipynb)
 
-    Route_A_Bacpipe_Colab.ipynb
-        1024-d BirdNET via bacpipe. Use a T4 GPU.
+| Notebook | When |
+|----------|------|
+| [Demo_Colab.ipynb](./Demo_Colab.ipynb) | Demo manifest, or you already have JSONL |
+| [Route_A_Bacpipe_Colab.ipynb](./Route_A_Bacpipe_Colab.ipynb) | 1024-d BirdNET via bacpipe |
+| [Route_B_BMZ_Colab.ipynb](./Route_B_BMZ_Colab.ipynb) | 1024-d BirdNET via bioacoustics-model-zoo |
 
-    Route_B_BMZ_Colab.ipynb
-        1024-d BirdNET via bioacoustics-model-zoo.
+## Install (notebook)
 
-INSTALL (notebook)
-    import sys
-    !{sys.executable} -m pip install -q -r docs/colab-requirements.txt
-    !{sys.executable} -m pip install -q -e .
+```python
+import sys
+!{sys.executable} -m pip install -q -r docs/colab-requirements.txt
+!{sys.executable} -m pip install -q -e .
+```
 
-    Route A: install bacpipe with --ignore-requires-python --no-deps.
-    bacpipe requires Python < 3.13; Colab is 3.13. Reuse Colab TF and Torch.
+Route A: bacpipe requires Python < 3.13. Colab is 3.13, so:
 
-RUN DEMO
-    !python -m bioacoustic_embedding_dynamics.cli --make-sample --out reports --seed 42
+```python
+!{sys.executable} -m pip install --ignore-requires-python --no-deps bacpipe
+```
 
-OWN MANIFEST
-    Upload detections.jsonl, then:
+Reuse Colab's TensorFlow and Torch. Do not let pip pull bacpipe's full pin set.
 
-    MANIFEST = "/content/detections.jsonl"
-    !python -m bioacoustic_embedding_dynamics.cli --manifest {MANIFEST} --out reports --seed 42
+## Demo
 
-GPU
-    colab new -s bel-gpu --gpu T4
-    colab sessions
-    colab stop -s bel-gpu
+```python
+!python -m bioacoustic_embedding_dynamics.cli --make-sample --out reports --seed 42
+```
 
-    Use T4 for Route A. Demo and Route B run on CPU.
+## Your own manifest
 
-TESTS
-    Fast (demo + Route B), about 5-10 minutes:
+Upload `detections.jsonl`, then:
 
-        colab exec -s SESSION --timeout 3600 -f scripts/colab_run_fast_tests.py
+```python
+MANIFEST = "/content/detections.jsonl"
+!python -m bioacoustic_embedding_dynamics.cli --manifest {MANIFEST} --out reports --seed 42
+```
 
-    Route A on T4:
+## GPU (T4) via CLI
 
-        colab new -s bel-gpu --gpu T4
-        colab exec -s bel-gpu --timeout 7200 -f scripts/colab_run_bacpipe_test.py
+```bash
+colab new -s bel-gpu --gpu T4
+colab sessions
+colab stop -s bel-gpu
+```
 
-    Skip bacpipe in the full suite:
+## Automated tests
 
-        colab exec -s SESSION --timeout 7200 -f scripts/colab_run_all_tests.py -- --skip-bacpipe
+```bash
+# demo + Route B, about 5-10 min
+colab exec -s SESSION --timeout 3600 -f scripts/colab_run_fast_tests.py
+
+# Route A on T4
+colab new -s bel-gpu --gpu T4
+colab exec -s bel-gpu --timeout 7200 -f scripts/colab_run_bacpipe_test.py
+
+# skip bacpipe in the full suite
+colab exec -s SESSION --timeout 7200 -f scripts/colab_run_all_tests.py -- --skip-bacpipe
+```

@@ -1,90 +1,67 @@
-NAME
-    bioacoustic-embedding-dynamics - analyse high-dimensional bioacoustic embeddings
+# bioacoustic-embedding-dynamics
 
-SYNOPSIS
-    python -m bioacoustic_embedding_dynamics.cli [--make-sample] [--manifest FILE]
-        [--out DIR] [--seed N]
+Takes a JSONL of bioacoustic detections (optional embedding vectors) and runs PCA, UMAP, a binned centroid trajectory, change-point detection, and a Gaussian HMM.
 
-DESCRIPTION
-    Read a JSONL detection manifest (one object per line). Each row is a
-    detection with start time, end time, species, confidence, site, and an
-    optional embedding vector.
+If a row has no `embedding`, a small PyTorch mapper synthesizes one for the demo. Real runs should pass BirdNET vectors from bacpipe (Route A) or bioacoustics-model-zoo (Route B).
 
-    The program then:
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ST-48-1240162/bioacoustic-embedding-dynamics/blob/main/docs/Demo_Colab.ipynb)
 
-    1. loads or synthesizes embedding vectors
-    2. runs PCA and UMAP
-    3. bins a centroid trajectory in reduced space
-    4. detects change-points on activity rate and on the trajectory
-    5. fits a Gaussian HMM on the binned timeline
+| Notebook | What it does |
+|----------|----------------|
+| [docs/Demo_Colab.ipynb](docs/Demo_Colab.ipynb) | Synthetic manifest, CPU, ~2-3 min |
+| [docs/Route_A_Bacpipe_Colab.ipynb](docs/Route_A_Bacpipe_Colab.ipynb) | 1024-d BirdNET via bacpipe (T4) |
+| [docs/Route_B_BMZ_Colab.ipynb](docs/Route_B_BMZ_Colab.ipynb) | 1024-d BirdNET via bioacoustics-model-zoo |
 
-    Demo embeddings are a small PyTorch mapper (species prototype plus
-    temporal drift). Production runs should pass real embeddings from
-    BirdNET (bacpipe or bioacoustics-model-zoo).
+Walkthrough: [docs/COLAB.md](docs/COLAB.md)
 
-OPTIONS
-    --manifest FILE
-        Path to detections.jsonl. If omitted, data/sample_detections.jsonl
-        is used (created if missing).
+## Install
 
-    --out DIR
-        Output directory (default: reports).
+Colab: run the notebook install cell. Pins are in [`docs/colab-requirements.txt`](docs/colab-requirements.txt).
 
-    --seed N
-        Random seed (default: 42).
+```sh
+python -m pip install -e .
+```
 
-    --make-sample
-        Write a demo manifest to data/sample_detections.jsonl.
+Route A also needs bacpipe. On Colab (Python 3.13) install it with `--ignore-requires-python --no-deps` and keep Colab's TensorFlow / Torch. See the Route A notebook.
 
-    See python -m bioacoustic_embedding_dynamics.cli --help for the rest.
+## Run
 
-MANIFEST
-    Required-ish keys (aliases accepted):
+```sh
+python -m bioacoustic_embedding_dynamics.cli --make-sample --out reports
+python -m bioacoustic_embedding_dynamics.cli --manifest data/detections.jsonl --out reports --seed 42
+```
 
-        start_s, end_s, species, confidence, site, embedding
+`python -m bioacoustic_embedding_dynamics.cli --help` lists the rest (`--bin-s`, `--hmm-states`, ...).
 
-    Alternative keys: scientific_name, score, window_start_s.
+## Manifest
 
-    If embedding is omitted, vectors are synthesized. Treat that as demo
-    data, not field output.
+One JSON object per line:
 
-COLAB
-    docs/Demo_Colab.ipynb
-        Synthetic manifest, CPU is enough.
+```json
+{
+  "start_s": 120.5,
+  "end_s": 123.5,
+  "species": "Pseudopipra pipra",
+  "confidence": 0.91,
+  "site": "costa-rica-site-a",
+  "embedding": [0.012, -0.034]
+}
+```
 
-    docs/Route_A_Bacpipe_Colab.ipynb
-        Real 1024-d BirdNET embeddings via bacpipe (T4 GPU).
+Aliases: `scientific_name`, `score`, `window_start_s`. If `embedding` is missing, vectors are synthesized. Treat that as demo data, not field output.
 
-    docs/Route_B_BMZ_Colab.ipynb
-        Real 1024-d BirdNET embeddings via bioacoustics-model-zoo.
+## Outputs (`reports/`)
 
-    See docs/COLAB.md.
+| File | What it is |
+|------|------------|
+| `pca_species.png`, `umap_species.png` | Embedding geometry by species |
+| `trajectory_pca.png` | Binned centroid path in PC space |
+| `changepoints.png` | Activity-rate change-points |
+| `trajectory_changepoints.png` | Trajectory (PC1) change-points |
+| `hmm_regimes.png` | HMM state over time |
+| `embedding_trajectory.csv`, `binned_with_hmm.csv` | Binned tables |
+| `summary.json`, `run_config.json` | Run metadata |
 
-FILES
-    reports/pca_species.png, reports/umap_species.png
-        Embedding geometry by species.
+## License
 
-    reports/trajectory_pca.png
-        Binned centroid path in PC space.
-
-    reports/changepoints.png
-        Activity-rate change-points.
-
-    reports/trajectory_changepoints.png
-        Trajectory (PC1) change-points.
-
-    reports/hmm_regimes.png
-        HMM state over time.
-
-    reports/embedding_trajectory.csv, reports/binned_with_hmm.csv
-        Binned tables.
-
-    reports/summary.json, reports/run_config.json
-        Run metadata.
-
-EXAMPLE
-    python -m bioacoustic_embedding_dynamics.cli --make-sample --out reports
-    python -m bioacoustic_embedding_dynamics.cli --manifest data/detections.jsonl --out reports --seed 42
-
-LICENSE
-    GPL-3.0-or-later
+GPL-3.0-or-later
