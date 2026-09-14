@@ -69,89 +69,91 @@ const MATH = {
 
 const COPY = {
     kicker: "colab walkthrough",
-    lede: "Runtime, Run all. The notebook clones this repo, runs BirdNET on a short real clip (or your manifest), and plots how embedding geometry changes along the recording.",
+    lede: "Runtime, Run all. The notebook clones the repo, runs BirdNET on a short clip (or your manifest), and tracks how the embedding cloud moves through the recording.",
     intro_label: "intro",
     intro_tabs: [
       { id: "overview", label: "overview" },
       { id: "concepts", label: "concepts" },
     ],
-    ask_h: "Embeddings during the recording",
+    ask_h: "Do embeddings move?",
     ask_p: [
-      "BirdNET names the species and emits a $1024$-d vector $\\mathbf{x}_i$ for each detection window. Most workflows stop at species counts or occupancy tables.",
-      "This repo keeps the vectors. Each detection is a point in a high-dimensional space. The pipeline asks whether the average point drifts, jumps, or sits in recurring regimes as time passes.",
-      "Demo, Route A, and Route B all use real BirdNET embeddings on the bacpipe test wav ($\\sim 1\\,\\mathrm{min}$). The demo notebook uses $\\Delta t=15\\,\\mathrm{s}$ bins so short clips still get several timeline points.",
+      "BirdNET gives each detection window a species label and a $1024$-d vector $\\mathbf{x}_i$. Most pipelines stop at species counts.",
+      "We keep the vectors. Each detection is a point in a large space. Does that cloud drift, jump, or settle into recurring shapes as the recording plays?",
+      "Demo, Route A, and Route B all embed the bacpipe test wav ($\\sim 1\\,\\mathrm{min}$) with real BirdNET. The demo bins at $\\Delta t=15\\,\\mathrm{s}$ so a one-minute clip still has several points on the timeline.",
     ],
     ask_math: MATH.goal,
-    concepts_h: "Notation and objects",
-    concepts_lede: "Symbols below match the code and summary.json. Click a pipeline step or figure for the same formulas in context.",
+    concepts_h: "Notation",
+    concepts_lede: "Same symbols as the code and summary.json. Pipeline steps and figures repeat the formulas when they apply.",
     concepts: [
       {
         title: "Detection embedding",
         body: [
-          "BirdNET turns a short audio window into a species label, a confidence score $c_i$, and an embedding $\\mathbf{x}_i\\in\\mathbb{R}^{1024}$. Similar calls land near each other in that space even when labels differ.",
+          "BirdNET reads a short audio window and returns a species label, confidence $c_i$, and embedding $\\mathbf{x}_i\\in\\mathbb{R}^{1024}$. Similar calls sit close in that space even when the labels disagree.",
         ],
         math: MATH.embedding,
       },
       {
         title: "JSONL manifest",
         body: [
-          "One JSON object per line. $\\mathrm{start\\_s}$ and $\\mathrm{end\\_s}$ place the call on the timeline. $\\text{species}$ and $c_i$ come from BirdNET. $\\mathbf{x}_i$ is the vector used for PCA, UMAP, and trajectories.",
+          "One JSON object per line. $\\mathrm{start\\_s}$ and $\\mathrm{end\\_s}$ place the call on the timeline. $\\text{species}$ and $c_i$ come from BirdNET. $\\mathbf{x}_i$ feeds PCA, UMAP, and trajectories.",
         ],
         math: MATH.manifest,
       },
       {
         title: "Scaling and PCA",
         body: [
-          "Embeddings are column-standardized ($\\tilde x_{id}$) before PCA so one loud dimension does not dominate. PCA is linear: $\\mathrm{PC1}$ and $\\mathrm{PC2}$ are the directions of largest variance after scaling.",
+          "Columns are standardized ($\\tilde x_{id}$) so one loud dimension does not dominate. PCA is linear: $\\mathrm{PC1}$ and $\\mathrm{PC2}$ are the top variance directions after scaling.",
         ],
         math: [...MATH.scale, ...MATH.pca],
       },
       {
         title: "UMAP",
         body: [
-          "UMAP is a nonlinear 2D map of the same points. It can separate local clusters PCA smears together. Axis units are arbitrary; only relative neighborhoods are meaningful.",
+          "UMAP maps the same points into 2D with a nonlinear fit. Local clusters can separate here when PCA smears them. Axis numbers are arbitrary; trust neighborhoods, not distances.",
         ],
         math: MATH.umap,
       },
       {
         title: "Time bins and centroids",
         body: [
-          "Detections are grouped into fixed-width bins from first to last call. Empty bins remain with rate zero. Occupied bins get a confidence-weighted mean in PC space; that sequence is the trajectory.",
+          "Detections fall into fixed-width bins from first to last call. Empty bins stay on the timeline at rate zero. Occupied bins get a confidence-weighted mean in PC space; that sequence is the trajectory.",
         ],
         math: [...MATH.bin, ...MATH.centroid],
       },
       {
         title: "Change-points and HMM",
         body: [
-          "PELT splits the binned series when segment cost plus penalty $\\beta|\\tau|$ is cheaper than one long segment. Two HMMs label regimes: one on embedding centroids, one on activity $(r_b,R_b,\\bar{c}_b)$.",
+          "PELT cuts the binned series where a split beats one long segment, with penalty $\\beta|\\tau|$. Two HMMs label regimes: embedding centroids, and activity $(r_b,R_b,\\bar{c}_b)$.",
         ],
         math: [...MATH.peltBoth, ...MATH.hmm],
       },
     ],
     walk_label: "pipeline",
-    keys: "Left and right arrows change the step. The canvas is a cartoon per step (vectors = timeline to 1024-d; geometry = PCA vs UMAP split). It is not the PNG Colab exports.",
+    keys: "Arrow keys change the step. The canvas is a sketch for each stage, not the Colab PNG.",
     prev: "prev",
     next: "next",
     fig_label: "reports/",
-    fig_h: "Output figures",
-    fig_note: "Demo uses $\\Delta t=15\\,\\mathrm{s}$ bins on the bacpipe test wav ($\\sim 1\\,\\mathrm{min}$, $n=22$ detections, five occupied bins). Route A and Route B site bundles only include PCA and UMAP (default $\\Delta t=60\\,\\mathrm{s}$ on that clip).",
-    fig_missing: "This PNG is not in the site bundle for the selected run. Switch to Demo or run Colab to generate it.",
-    step_fig_gap: "The figure for this pipeline step is only bundled under Demo ($\\Delta t=15\\,\\mathrm{s}$). Route A/B site PNGs stop at PCA and UMAP.",
+    fig_h: "figures",
+    fig_note: "All three runs use the same bacpipe test wav ($\\sim 1\\,\\mathrm{min}$, $22$ detections). Demo has the full set at $\\Delta t=15\\,\\mathrm{s}$. Route A and Route B on this site stop at PCA and UMAP.",
+    fig_footnote:
+      "Demo and Route B show the same PCA and UMAP files. Same wav, same BMZ BirdNET run, analysis seed $42$. Demo also has trajectory, changepoint, HMM, and shuffle plots ($\\Delta t=15\\,\\mathrm{s}$, five occupied bins). Route B Colab matches that setup; the site just omits the extra PNGs. Route A runs bacpipe's own BirdNET on the same wav, so its two plots differ.",
+    fig_missing: "Not included for this run. Try Demo, or run Colab.",
+    step_fig_gap: "Only Demo includes this figure ($\\Delta t=15\\,\\mathrm{s}$). Route A and Route B stop at PCA and UMAP on the site.",
     runs: [
       { id: "demo", label: "Demo" },
       { id: "bacpipe", label: "Route A" },
       { id: "bmz", label: "Route B" },
     ],
     nb_label: "notebooks",
-    nb_h: "Which notebook",
+    nb_h: "notebooks",
     steps: [
       {
         chip: "detections",
         file: "JSONL manifest",
         title: "One JSON line per detection",
         body: [
-          "Each line is one BirdNET window: $\\mathrm{start\\_s}$, $\\text{species}$, $c_i$, and optionally $\\mathbf{x}_i$.",
-          "The demo runs BMZ BirdNET on the bacpipe bundled test wav ($\\sim 1\\,\\mathrm{min}$, $n=22$ in the site bundle). You can swap in your own wav or an existing manifest.",
+          "Each line is one BirdNET window: $\\mathrm{start\\_s}$, $\\text{species}$, $c_i$, and optional $\\mathbf{x}_i$.",
+          "The demo runs BMZ BirdNET on the bacpipe test wav that ships with the repo ($\\sim 1\\,\\mathrm{min}$, $22$ detections on the site). Swap in your own wav or manifest if you want.",
         ],
         math: MATH.manifest,
       },
@@ -160,8 +162,8 @@ const COPY = {
         file: "BirdNET or demo mapper",
         title: "Where the 1024-d numbers come from",
         body: [
-          "Route A (bacpipe) and Route B (bioacoustics-model-zoo) call BirdNET and write $\\mathbf{x}_i$ into the manifest. Each vector summarizes the sound in that window, not the whole file.",
-          "Pass --make-sample only for offline testing with synthetic $128$-d vectors. Mixing real embeddings with missing ones on the same run is an error.",
+          "Route A (bacpipe) and Route B (bioacoustics-model-zoo) call BirdNET and write $\\mathbf{x}_i$ into the manifest. Each vector covers that window, not the whole file.",
+          "Pass --make-sample only for offline tests with synthetic $128$-d vectors. Do not mix real embeddings with missing ones on the same run.",
         ],
         math: MATH.embedding,
       },
@@ -170,9 +172,9 @@ const COPY = {
         file: "pca_species.png and umap_species.png",
         title: "PCA and UMAP",
         body: [
-          "Same detections, two 2D views. Points are colored by species. Axes are abstract coordinates, not seconds or kHz.",
-          "PCA is linear and fast to read: do species separate along $\\mathrm{PC1}$? UMAP stresses local neighborhoods; clusters can look tighter but distances are not comparable to PCA.",
-          "summary.json reports intra- vs inter-species cosine distance $d_{\\cos}$ as a coarse separation check.",
+          "Same detections, two 2D views. Color is species. Axes are abstract coordinates, not seconds or kHz.",
+          "PCA is linear and easy to read: do species separate along $\\mathrm{PC1}$? UMAP pulls local neighborhoods apart; do not compare its distances to PCA.",
+          "summary.json lists mean intra- vs inter-species cosine distance $d_{\\cos}$ as a quick separation read.",
         ],
         math: [...MATH.scale, ...MATH.pca, ...MATH.umap, ...MATH.cosine],
       },
@@ -181,8 +183,8 @@ const COPY = {
         file: "trajectory_pca.png",
         title: "Centroid through time",
         body: [
-          "Detections are assigned to bins of width $\\texttt{bin\\_s}$ ($\\Delta t=15\\,\\mathrm{s}$ in the demo notebook, $60\\,\\mathrm{s}$ by default). The confidence-weighted centroid $\\mathbf{c}_b$ in PC space is one point per occupied bin; arrows follow time.",
-          "$\\bar{c}_b$ in each bin is an ordinary average, not weighted. Need several occupied bins before the path is more than a short segment.",
+          "Detections land in bins of width $\\texttt{bin\\_s}$ ($\\Delta t=15\\,\\mathrm{s}$ in the demo notebook, $60\\,\\mathrm{s}$ by default). The confidence-weighted centroid $\\mathbf{c}_b$ in PC space marks each occupied bin; arrows follow time.",
+          "$\\bar{c}_b$ is a plain average per bin, not confidence-weighted. You need several occupied bins before the path is anything more than a stub.",
         ],
         math: [...MATH.bin, ...MATH.centroid],
       },
@@ -191,8 +193,8 @@ const COPY = {
         file: "changepoints.png and trajectory_changepoints.png",
         title: "Change-points on rate and on PC1",
         body: [
-          "PELT (pruned exact linear time) searches break locations that minimize segment cost plus $\\beta|\\tau|$.",
-          "On detection rate $r_b$, breaks mean calling got busier or quieter (empty bins count as zero). On $c_b^{(1)}$, breaks mean the average embedding shifted. Defaults: $\\beta=3$ for rate, $\\beta=2.5$ for $\\mathrm{PC1}$.",
+          "PELT hunts break locations that minimize segment cost plus $\\beta|\\tau|$.",
+          "On detection rate $r_b$, a break means calling got busier or quieter (empty bins count as zero). On $c_b^{(1)}$, a break means the average embedding shifted. Defaults: $\\beta=3$ for rate, $\\beta=2.5$ for $\\mathrm{PC1}$.",
         ],
         math: [...MATH.rate, ...MATH.peltBoth],
       },
@@ -202,8 +204,8 @@ const COPY = {
         title: "Two HMMs",
         body: [
           "A diagonal Gaussian HMM assigns each bin a hidden state $s_t$. Transitions are Markov; emissions are Gaussian in the chosen features.",
-          "Top row: states on $(c_b^{(1)},c_b^{(2)})$ centroids (embedding regimes). Bottom row: states on standardized $(r_b,R_b,\\bar{c}_b)$. State IDs are arbitrary labels ($2$–$3$ states depending on bin count).",
-          "$N_{\\mathrm{sw}}$ in summary.json counts how often the embedding HMM switches state along the timeline.",
+          "Top row: states on $(c_b^{(1)},c_b^{(2)})$ centroids. Bottom row: states on standardized $(r_b,R_b,\\bar{c}_b)$. State IDs are arbitrary ($2$–$3$ states depending on bin count).",
+          "$N_{\\mathrm{sw}}$ in summary.json counts embedding-HMM switches along the timeline.",
         ],
         math: MATH.hmm,
       },
@@ -212,16 +214,16 @@ const COPY = {
         file: "shuffle_null.png",
         title: "Shuffle start_s",
         body: [
-          "Only $\\mathrm{start\\_s}$ is permuted; species and $\\mathbf{x}_i$ stay on the same rows. Timeline order is destroyed while the point cloud is unchanged.",
-          "If changepoints and HMM switches mostly track real temporal structure, the shuffled run should show fewer switches or messier breaks. Compare $N_{\\mathrm{sw}}$ with shuffle $N_{\\mathrm{sw}}$.",
+          "Only $\\mathrm{start\\_s}$ is permuted; species and $\\mathbf{x}_i$ stay on their rows. Timeline order breaks; the point cloud does not.",
+          "If changepoints and HMM switches track real time structure, the shuffled run should look noisier and switch less. Compare $N_{\\mathrm{sw}}$ with shuffle $N_{\\mathrm{sw}}$.",
         ],
         math: MATH.shuffle,
       },
     ],
     nbs: [
       { name: "Demo", meta: "CPU, about 5-10 min. BMZ BirdNET on the bacpipe test wav, $\\Delta t=15\\,\\mathrm{s}$ bins.", href: COLAB.demo },
-      { name: "Route A", meta: "T4 if you have one. bacpipe BirdNET on the bundled test wavs. The first run downloads weights.", href: COLAB.a },
-      { name: "Route B", meta: "CPU, about 5-10 min. BMZ BirdNET, $1024$-d. Uses bacpipe test wav if /content/audio is empty.", href: COLAB.b },
+      { name: "Route A", meta: "T4 if available. bacpipe BirdNET; first run downloads weights.", href: COLAB.a },
+      { name: "Route B", meta: "CPU, about 5-10 min. BMZ BirdNET, $1024$-d. Falls back to bacpipe test wav when /content/audio is empty.", href: COLAB.b },
     ],
 };
 
@@ -357,8 +359,8 @@ const FIG_DEFS = [
     id: "pca_species.png",
     title: "species in PCA",
     body: [
-      "One point per detection after column scaling ($\\tilde{\\mathbf{x}}_i$). Color is species label from BirdNET.",
-      "$\\mathrm{PC1}$ and $\\mathrm{PC2}$ are the leading variance directions. Use this plot to see overlap between species clouds, not absolute timbre units.",
+      "One point per detection after column scaling ($\\tilde{\\mathbf{x}}_i$). Color is BirdNET species.",
+      "$\\mathrm{PC1}$ and $\\mathrm{PC2}$ are the leading variance directions. Read overlap between species clouds, not absolute timbre.",
     ],
     math: [...MATH.scale, ...MATH.pca, ...MATH.cosine],
   },
@@ -366,8 +368,8 @@ const FIG_DEFS = [
     id: "umap_species.png",
     title: "species in UMAP",
     body: [
-      "Same scaled embeddings, mapped with UMAP ($n_{\\mathrm{neighbors}}=15$ by default). Good for local structure; bad for reading absolute distances.",
-      "If $n$ detections is below four, the code falls back to PCA for stability.",
+      "Same scaled embeddings, UMAP with default $n_{\\mathrm{neighbors}}=15$. Useful for local structure; distances are not calibrated like PCA.",
+      "Below four detections, the code falls back to PCA.",
     ],
     math: MATH.umap,
   },
@@ -375,8 +377,8 @@ const FIG_DEFS = [
     id: "trajectory_pca.png",
     title: "binned centroids",
     body: [
-      "Each marker is one bin's confidence-weighted centroid $\\mathbf{c}_b$ in PC space. Color is the embedding HMM state $s_t$. The polyline follows bin order.",
-      "Demo: five occupied bins on $\\sim 1\\,\\mathrm{min}$ audio with $\\texttt{bin\\_s}=15\\,\\mathrm{s}$. With only two bins (default $\\Delta t=60\\,\\mathrm{s}$ on a short clip) the path collapses to a line.",
+      "Each marker is a bin's confidence-weighted centroid $\\mathbf{c}_b$ in PC space. Color is embedding HMM state $s_t$. The polyline follows bin order.",
+      "Demo has five occupied bins on $\\sim 1\\,\\mathrm{min}$ with $\\texttt{bin\\_s}=15\\,\\mathrm{s}$. At default $\\Delta t=60\\,\\mathrm{s}$ on a short clip you often get two bins and a flat line.",
     ],
     math: [...MATH.bin, ...MATH.centroid],
   },
@@ -385,7 +387,7 @@ const FIG_DEFS = [
     title: "call rate",
     body: [
       "$r_b=n_b/\\Delta t$ on the full bin grid, including empty bins at zero.",
-      "Red dashed lines are PELT breaks ($\\beta=3$): segments where calling intensity changes.",
+      "Red dashed lines are PELT breaks ($\\beta=3$) where calling intensity shifts.",
     ],
     math: [...MATH.rate, ...MATH.peltRate],
   },
@@ -394,7 +396,7 @@ const FIG_DEFS = [
     title: "centroid PC1",
     body: [
       "$c_b^{(1)}$ of the binned centroid versus time. Breaks ($\\beta=2.5$) mark jumps in the average embedding, not changes in call count.",
-      "Read alongside changepoints.png: $r_b$ can spike while $\\mathbf{c}_b$ stays put, or the reverse.",
+      "Pair with changepoints.png: $r_b$ can spike while $\\mathbf{c}_b$ stays put, or the other way around.",
     ],
     math: [...MATH.centroid, ...MATH.peltPc1],
   },
@@ -403,7 +405,7 @@ const FIG_DEFS = [
     title: "two HMMs",
     body: [
       "Top: hidden states $s_t$ on embedding centroids $(c_b^{(1)},c_b^{(2)})$. Bottom: states on activity features after standardization.",
-      "Regimes need not match: loud mixed-species calling and a pure embedding shift are different signals.",
+      "The two rows need not agree. Loud mixed-species calling and a pure embedding shift are different signals.",
     ],
     math: MATH.hmm,
   },
@@ -412,7 +414,7 @@ const FIG_DEFS = [
     title: "shuffle times",
     body: [
       "Left: original timeline. Right: $\\mathrm{start\\_s}$ permuted, same $\\mathbf{x}_i$. Compare changepoint counts and $N_{\\mathrm{sw}}$ in summary.json.",
-      "Large drops on the shuffled side suggest the original ordering carried real structure.",
+      "Big drops on the shuffled side suggest the original order carried something real.",
     ],
     math: MATH.shuffle,
   },
