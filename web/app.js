@@ -4,6 +4,35 @@ const COLAB = {
   b: "https://colab.research.google.com/github/ST-48-1240162/bioacoustic-embedding-dynamics/blob/main/docs/Route_B_BMZ_Colab.ipynb",
 };
 
+const MATH = {
+  pca: [
+    String.raw`\tilde x_{id}=(x_{id}-\mu_d)/\sigma_d,\quad \mathbf{z}_i=W_{:2}^{\top}\tilde{\mathbf{x}}_i`,
+  ],
+  centroid: [
+    String.raw`w_i=\dfrac{(c_i)_{+}}{\sum_{j\in b}(c_j)_{+}},\quad \mathbf{c}_b=\sum_{i\in b}w_i\mathbf{z}_i`,
+    String.raw`\bar{c}_b=\dfrac{1}{|b|}\sum_{i\in b}c_i`,
+  ],
+  rate: [String.raw`r_b=n_b/\Delta t,\quad \Delta t=60\,\mathrm{s}`],
+  peltBoth: [
+    String.raw`y\in\{r_b,\,c_b^{(1)}\}`,
+    String.raw`\min_{\tau}\sum_k C_{\mathrm{rbf}}(y_{\tau_{k-1}:\tau_k})+\beta|\tau|`,
+  ],
+  peltRate: [
+    String.raw`y_b=r_b,\ \beta=3`,
+    String.raw`\min_{\tau}\sum_k C_{\mathrm{rbf}}(y_{\tau_{k-1}:\tau_k})+\beta|\tau|`,
+  ],
+  peltPc1: [
+    String.raw`y_b=c_b^{(1)},\ \beta=2.5`,
+    String.raw`\min_{\tau}\sum_k C_{\mathrm{rbf}}(y_{\tau_{k-1}:\tau_k})+\beta|\tau|`,
+  ],
+  hmm: [
+    String.raw`\mathbf{x}_t\mid s_t\sim\mathcal{N}(\boldsymbol{\mu}_{s_t},\mathrm{diag}(\boldsymbol{\sigma}^{2}_{s_t}))`,
+    String.raw`\mathbf{x}^{\mathrm{emb}}_t=(c_b^{(1)},c_b^{(2)}),\quad \mathbf{x}^{\mathrm{act}}_t=(r_b,R_b,\bar{c}_b)`,
+    String.raw`N_{\mathrm{sw}}=\sum_t\mathbf{1}[s_t\neq s_{t-1}]`,
+  ],
+  shuffle: [String.raw`\mathrm{start}'_i=\mathrm{start}_{\pi(i)}`],
+};
+
 const COPY = {
     kicker: "colab walkthrough",
     lede: "Runtime, Run all. The notebook clones this repo, writes a sample detection JSONL or loads yours, and plots the embedding vectors for the length of the recording.",
@@ -43,40 +72,45 @@ const COPY = {
         file: "pca_species.png and umap_species.png",
         title: "PCA and UMAP",
         body: "Same detections, two maps. PCA is linear. UMAP pulls nearby points into islands. Color is species. The axis numbers are not Hertz or meters. Demo blobs look tidy because the prototypes were written in. BirdNET clouds usually look messier.",
+        math: MATH.pca,
       },
       {
         chip: "trajectory",
         file: "trajectory_pca.png",
         title: "Centroid of each minute",
-        body: "Calls go into 60 s bins by default. The bin mean is weighted by confidence, so weak detections pull less. The plot is that mean in PC1 and PC2. Color is the embedding HMM state. Arrows still follow time.",
+        body: "Calls go into 60 s bins by default. The bin mean is weighted by confidence, so weak detections pull less. The plot is that mean in PC1 and PC2. Color is the embedding HMM state. Arrows still follow time. Mean confidence is an unweighted average.",
+        math: MATH.centroid,
       },
       {
         chip: "breaks",
         file: "changepoints.png and trajectory_changepoints.png",
         title: "Change-points on rate and on PC1",
-        body: "PELT on detection rate (empty bins count as 0) finds when calling gets busier or quieter. PELT on PC1 finds when the average vector jumps. A red line on the rate plot only means more or fewer calls.",
+        body: "PELT on detection rate (empty bins count as 0) finds when calling gets busier or quieter. PELT on PC1 finds when the average vector jumps. A red line on the rate plot only means more or fewer calls. Rate uses \u03b2 = 3, PC1 uses \u03b2 = 2.5.",
+        math: [...MATH.rate, ...MATH.peltBoth],
       },
       {
         chip: "HMM",
         file: "hmm_regimes.png",
         title: "Two HMMs",
-        body: "The upper row is fit on PC1/PC2 centroids, so the states live in embedding space. The lower row is fit on call rate, species count, and mean confidence. 0, 1, and 2 are just labels.",
+        body: "The upper row is fit on PC1/PC2 centroids, so the states live in embedding space. The lower row is fit on call rate, species count, and mean confidence. Features are standardized first. 0, 1, and 2 are just labels.",
+        math: MATH.hmm,
       },
       {
         chip: "shuffle",
         file: "shuffle_null.png",
         title: "Shuffle start_s",
         body: "Only the times are permuted. Species and embeddings stay on the same rows. If the PC1 breaks and HMM flips depended on order, the shuffled side should look noisier. Compare hmm_n_switches with shuffle_hmm_n_switches in summary.json. The fit still uses a fixed number of states, so the right-hand HMM will not go flat.",
+        math: MATH.shuffle,
       },
     ],
     figs: [
-      { id: "pca_species.png", title: "species in PCA", body: "One point per detection. Color is species. Axes are the first two principal components of the scaled embedding. Useful if you want to see whether species sit apart. The tick labels are not physical units." },
+      { id: "pca_species.png", title: "species in PCA", body: "One point per detection. Color is species. Axes are the first two principal components of the scaled embedding. Useful if you want to see whether species sit apart. The tick labels are not physical units.", math: MATH.pca },
       { id: "umap_species.png", title: "species in UMAP", body: "Same points, nonlinear map. Handy if PCA is a blob but local groups still exist. A distance on this plot is not a PCA distance." },
-      { id: "trajectory_pca.png", title: "minute centroids", body: "Each marker is one minute's confidence-weighted centroid in PC space. Color is HMM state. A long arrow means that minute's average vector moved a long way." },
-      { id: "changepoints.png", title: "call rate", body: "Call rate against minutes, with empty bins at 0. Red dashed lines in the Colab PNG are PELT breaks in how often animals called." },
-      { id: "trajectory_changepoints.png", title: "centroid PC1", body: "PC1 of the centroid against minutes. Breaks here are shifts in the average vector. Put changepoints.png next to it." },
-      { id: "hmm_regimes.png", title: "two HMMs", body: "Top: HMM on embedding centroids. Bottom: HMM on activity stats. They do not have to agree." },
-      { id: "shuffle_null.png", title: "shuffle times", body: "Original times on the left, shuffled start_s on the right. The test is whether the ordered structure survives the permutation." },
+      { id: "trajectory_pca.png", title: "minute centroids", body: "Each marker is one minute's confidence-weighted centroid in PC space. Color is HMM state. A long arrow means that minute's average vector moved a long way.", math: MATH.centroid },
+      { id: "changepoints.png", title: "call rate", body: "Call rate against minutes, with empty bins at 0. Red dashed lines in the Colab PNG are PELT breaks in how often animals called.", math: [...MATH.rate, ...MATH.peltRate] },
+      { id: "trajectory_changepoints.png", title: "centroid PC1", body: "PC1 of the centroid against minutes. Breaks here are shifts in the average vector. Put changepoints.png next to it.", math: MATH.peltPc1 },
+      { id: "hmm_regimes.png", title: "two HMMs", body: "Top: HMM on embedding centroids. Bottom: HMM on activity stats. They do not have to agree.", math: MATH.hmm },
+      { id: "shuffle_null.png", title: "shuffle times", body: "Original times on the left, shuffled start_s on the right. The test is whether the ordered structure survives the permutation.", math: MATH.shuffle },
     ],
     nbs: [
       { name: "Demo", meta: "CPU, about 2-3 min. Fake 128-d vectors with three planted regimes.", href: COLAB.demo },
@@ -325,6 +359,21 @@ function draw() {
   }
 }
 
+function renderMath(el, latexList) {
+  if (!el) return;
+  el.replaceChildren();
+  if (!latexList || !latexList.length || typeof katex === "undefined") {
+    el.hidden = true;
+    return;
+  }
+  latexList.forEach((tex) => {
+    const line = document.createElement("div");
+    katex.render(tex, line, { displayMode: true, throwOnError: false });
+    el.appendChild(line);
+  });
+  el.hidden = false;
+}
+
 function renderCopy() {
   const c = COPY;
   document.querySelectorAll("[data-i]").forEach((el) => {
@@ -349,6 +398,7 @@ function renderCopy() {
   document.getElementById("step-file").textContent = s.file;
   document.getElementById("step-title").textContent = s.title;
   document.getElementById("step-body").textContent = s.body;
+  renderMath(document.getElementById("step-math"), s.math);
 
   const runChips = document.getElementById("run-chips");
   runChips.replaceChildren();
@@ -392,6 +442,7 @@ function renderCopy() {
   const chosen = c.figs[figIdx];
   document.getElementById("fig-file").textContent = chosen.id;
   document.getElementById("fig-body").textContent = chosen.body;
+  renderMath(document.getElementById("fig-math"), chosen.math);
 
   const img = document.getElementById("fig-img");
   const frame = document.getElementById("fig-frame");

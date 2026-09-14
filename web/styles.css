@@ -389,8 +389,32 @@ canvas {
   display: none;
 }
 
+.math-block {
+  margin-top: 0.7rem;
+  padding: 0.55rem 0.7rem 0.4rem;
+  background: color-mix(in srgb, var(--fg) 4.5%, transparent);
+  overflow-x: auto;
+  color: var(--fg);
+}
+
+.math-block[hidden] {
+  display: none;
+}
+
+.math-block .katex {
+  font-size: 1.02em;
+}
+
+.math-block .katex-display {
+  margin: 0.4em 0;
+}
+
 .figure-caption {
   padding: 0.75rem 1rem 0.95rem;
+}
+
+.figure-caption .math-block {
+  margin-top: 0.55rem;
 }
 
 .figure-caption #fig-body {

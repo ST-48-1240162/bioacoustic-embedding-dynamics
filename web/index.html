@@ -15,6 +15,10 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.22/katex.min.css"
+    />
   </head>
   <body class="thoth-page" data-theme="light">
     <div class="thoth-page-shell">
@@ -68,6 +72,7 @@
             <p class="kicker" id="step-file"></p>
             <h3 id="step-title"></h3>
             <p id="step-body"></p>
+            <div class="math-block" id="step-math" hidden></div>
             <div class="nav-row">
               <button type="button" class="lite-chip-btn" id="prev-btn">prev</button>
               <button type="button" class="lite-chip-btn" id="next-btn">next</button>
@@ -92,6 +97,7 @@
             <div class="figure-caption reading-body">
               <p class="kicker" id="fig-file"></p>
               <p id="fig-body"></p>
+              <div class="math-block" id="fig-math" hidden></div>
             </div>
           </div>
         </div>
@@ -104,6 +110,7 @@
       </section>
 
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.22/katex.min.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>
