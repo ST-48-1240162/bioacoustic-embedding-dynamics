@@ -58,7 +58,15 @@
       <section class="thoth-section reading-body">
         <p class="thoth-section-label" data-i="ask_label"></p>
         <h2 data-i="ask_h"></h2>
-        <p data-i="ask_p"></p>
+        <div id="ask-body"></div>
+        <div class="math-block" id="ask-math" hidden></div>
+      </section>
+
+      <section class="thoth-section reading-body">
+        <p class="thoth-section-label" data-i="concepts_label"></p>
+        <h2 data-i="concepts_h"></h2>
+        <p class="hint" data-i="concepts_lede"></p>
+        <div class="concept-grid" id="concept-grid"></div>
       </section>
 
       <section class="thoth-section">
@@ -67,6 +75,10 @@
         <div class="walk" style="margin-top: 0.9rem">
           <div class="stage">
             <canvas id="viz" width="720" height="352" aria-label="pipeline sketch"></canvas>
+            <div class="viz-labels" id="viz-labels" hidden aria-hidden="true">
+              <span class="viz-label viz-label-y" id="viz-label-y"></span>
+              <span class="viz-label viz-label-x" id="viz-label-x"></span>
+            </div>
           </div>
           <div class="copy-pane reading-body">
             <p class="kicker" id="step-file"></p>

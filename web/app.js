@@ -5,47 +5,133 @@ const COLAB = {
 };
 
 const MATH = {
+  goal: [
+    String.raw`\text{question: does the cloud } \{\mathbf{x}_i\} \text{ move along the recording?}`,
+    String.raw`t \mapsto \mathbf{c}(t)=\text{confidence-weighted mean in PC space}`,
+  ],
+  embedding: [
+    String.raw`\mathbf{x}_i\in\mathbb{R}^{1024},\quad c_i\in[0,1],\quad \text{species}_i`,
+    String.raw`\text{BirdNET: } \mathbf{x}_i \leftarrow f_{\mathrm{BN}}(\text{audio window at } \mathrm{start\_s}_i)`,
+  ],
+  manifest: [
+    String.raw`\text{one JSON line per detection: } (\mathrm{start\_s},\mathrm{end\_s},\text{species},c_i,\mathbf{x}_i)`,
+  ],
+  scale: [
+    String.raw`\tilde x_{id}=\dfrac{x_{id}-\mu_d}{\sigma_d},\quad \mu_d=\mathrm{mean}_i(x_{id}),\ \sigma_d=\mathrm{std}_i(x_{id})`,
+  ],
   pca: [
-    String.raw`\tilde x_{id}=(x_{id}-\mu_d)/\sigma_d,\quad \mathbf{z}_i=W_{:2}^{\top}\tilde{\mathbf{x}}_i`,
+    String.raw`\mathbf{z}_i=W_{:2}^{\top}\tilde{\mathbf{x}}_i,\quad W\in\mathbb{R}^{D\times 2}`,
+    String.raw`\mathrm{PC1},\mathrm{PC2}=\arg\max\text{ variance directions of } \{\tilde{\mathbf{x}}_i\}`,
+  ],
+  umap: [
+    String.raw`\mathbf{u}_i=\mathrm{UMAP}(\tilde{\mathbf{x}}_i)\in\mathbb{R}^2,\quad n_{\mathrm{neighbors}}=15`,
+    String.raw`\text{keeps local neighbors; distances on the plot are not PCA distances}`,
+  ],
+  cosine: [
+    String.raw`d_{\cos}(i,j)=1-\dfrac{\mathbf{x}_i\cdot\mathbf{x}_j}{\lVert\mathbf{x}_i\rVert\,\lVert\mathbf{x}_j\rVert}`,
+    String.raw`\text{compare intra-species vs inter-species means in } summary.json`,
+  ],
+  bin: [
+    String.raw`b(i)=\left\lfloor\dfrac{\mathrm{start\_s}(i)-t_0}{\Delta t}\right\rfloor,\quad \Delta t=\texttt{bin\_s}`,
+    String.raw`t_0=\min_i\mathrm{start\_s}(i),\quad t_1=\max_i\mathrm{start\_s}(i)`,
   ],
   centroid: [
-    String.raw`w_i=\dfrac{(c_i)_{+}}{\sum_{j\in b}(c_j)_{+}},\quad \mathbf{c}_b=\sum_{i\in b}w_i\mathbf{z}_i`,
-    String.raw`\bar{c}_b=\dfrac{1}{|b|}\sum_{i\in b}c_i`,
+    String.raw`w_i=\dfrac{(c_i)_{+}}{\sum_{j\in b}(c_j)_{+}},\quad (c)_{+}=\max(c,0)`,
+    String.raw`\mathbf{c}_b=\sum_{i\in b}w_i\mathbf{z}_i,\quad c_b^{(1)}=\mathbf{c}_b\cdot e_1`,
+    String.raw`\bar{c}_b=\dfrac{1}{|b|}\sum_{i\in b}c_i,\quad r_b=\dfrac{n_b}{\Delta t}`,
   ],
-  rate: [String.raw`r_b=n_b/\Delta t,\quad \Delta t=60\,\mathrm{s}`],
+  rate: [
+    String.raw`r_b=\dfrac{n_b}{\Delta t},\quad n_b=\#\{\text{detections in bin } b\}`,
+    String.raw`\text{empty bins stay on the timeline with } r_b=0`,
+  ],
   peltBoth: [
-    String.raw`y\in\{r_b,\,c_b^{(1)}\}`,
-    String.raw`\min_{\tau}\sum_k C_{\mathrm{rbf}}(y_{\tau_{k-1}:\tau_k})+\beta|\tau|`,
+    String.raw`y_b\in\{r_b,\,c_b^{(1)}\},\quad \text{segment } y_{1:T}`,
+    String.raw`\min_{\tau}\ \sum_{k=1}^{|\tau|+1} C_{\mathrm{rbf}}\!\left(y_{\tau_{k-1}:\tau_k}\right)+\beta\,|\tau|`,
   ],
   peltRate: [
-    String.raw`y_b=r_b,\ \beta=3`,
-    String.raw`\min_{\tau}\sum_k C_{\mathrm{rbf}}(y_{\tau_{k-1}:\tau_k})+\beta|\tau|`,
+    String.raw`y_b=r_b,\quad \beta=3`,
+    String.raw`\min_{\tau}\ \sum_k C_{\mathrm{rbf}}(y_{\tau_{k-1}:\tau_k})+\beta|\tau|`,
   ],
   peltPc1: [
-    String.raw`y_b=c_b^{(1)},\ \beta=2.5`,
-    String.raw`\min_{\tau}\sum_k C_{\mathrm{rbf}}(y_{\tau_{k-1}:\tau_k})+\beta|\tau|`,
+    String.raw`y_b=c_b^{(1)},\quad \beta=2.5`,
+    String.raw`\min_{\tau}\ \sum_k C_{\mathrm{rbf}}(y_{\tau_{k-1}:\tau_k})+\beta|\tau|`,
   ],
   hmm: [
-    String.raw`\mathbf{x}_t\mid s_t\sim\mathcal{N}(\boldsymbol{\mu}_{s_t},\mathrm{diag}(\boldsymbol{\sigma}^{2}_{s_t}))`,
+    String.raw`P(s_t\mid s_{t-1})=\mathbf{A}_{s_{t-1},s_t},\quad \mathbf{x}_t\mid s_t\sim\mathcal{N}(\boldsymbol{\mu}_{s_t},\mathrm{diag}(\boldsymbol{\sigma}^{2}_{s_t}))`,
     String.raw`\mathbf{x}^{\mathrm{emb}}_t=(c_b^{(1)},c_b^{(2)}),\quad \mathbf{x}^{\mathrm{act}}_t=(r_b,R_b,\bar{c}_b)`,
     String.raw`N_{\mathrm{sw}}=\sum_t\mathbf{1}[s_t\neq s_{t-1}]`,
   ],
-  shuffle: [String.raw`\mathrm{start}'_i=\mathrm{start}_{\pi(i)}`],
+  shuffle: [
+    String.raw`\mathrm{start}'_i=\mathrm{start}_{\pi(i)},\quad \pi\text{ random permutation}`,
+    String.raw`\text{species and } \mathbf{x}_i \text{ unchanged; only time order breaks}`,
+  ],
 };
 
 const COPY = {
     kicker: "colab walkthrough",
-    lede: "Runtime, Run all. The notebook clones this repo, runs BirdNET on a short real clip (or your manifest), and plots embedding dynamics for that recording.",
+    lede: "Runtime, Run all. The notebook clones this repo, runs BirdNET on a short real clip (or your manifest), and plots how embedding geometry changes along the recording.",
     ask_label: "what it is doing",
     ask_h: "Embeddings during the recording",
-    ask_p: "BirdNET already names the species and emits a 1024-d vector for each detection. The usual next step is to count those calls. This notebook keeps the vectors and watches whether that cloud moves during the file. Demo, Route A, and Route B all use real BirdNET embeddings on short test audio (~1 min).",
+    ask_p: [
+      "BirdNET names the species and emits a $1024$-d vector $\\mathbf{x}_i$ for each detection window. Most workflows stop at species counts or occupancy tables.",
+      "This repo keeps the vectors. Each detection is a point in a high-dimensional space. The pipeline asks whether the average point drifts, jumps, or sits in recurring regimes as time passes.",
+      "Demo, Route A, and Route B all use real BirdNET embeddings on the bacpipe test wav ($\\sim 1\\,\\mathrm{min}$). The demo notebook uses $\\Delta t=15\\,\\mathrm{s}$ bins so short clips still get several timeline points.",
+    ],
+    ask_math: MATH.goal,
+    concepts_label: "concepts",
+    concepts_h: "Notation and objects",
+    concepts_lede: "Symbols below match the code and summary.json. Click a pipeline step or figure for the same formulas in context.",
+    concepts: [
+      {
+        title: "Detection embedding",
+        body: [
+          "BirdNET turns a short audio window into a species label, a confidence score $c_i$, and an embedding $\\mathbf{x}_i\\in\\mathbb{R}^{1024}$. Similar calls land near each other in that space even when labels differ.",
+        ],
+        math: MATH.embedding,
+      },
+      {
+        title: "JSONL manifest",
+        body: [
+          "One JSON object per line. $\\mathrm{start\\_s}$ and $\\mathrm{end\\_s}$ place the call on the timeline. $\\text{species}$ and $c_i$ come from BirdNET. $\\mathbf{x}_i$ is the vector used for PCA, UMAP, and trajectories.",
+        ],
+        math: MATH.manifest,
+      },
+      {
+        title: "Scaling and PCA",
+        body: [
+          "Embeddings are column-standardized ($\\tilde x_{id}$) before PCA so one loud dimension does not dominate. PCA is linear: $\\mathrm{PC1}$ and $\\mathrm{PC2}$ are the directions of largest variance after scaling.",
+        ],
+        math: [...MATH.scale, ...MATH.pca],
+      },
+      {
+        title: "UMAP",
+        body: [
+          "UMAP is a nonlinear 2D map of the same points. It can separate local clusters PCA smears together. Axis units are arbitrary; only relative neighborhoods are meaningful.",
+        ],
+        math: MATH.umap,
+      },
+      {
+        title: "Time bins and centroids",
+        body: [
+          "Detections are grouped into fixed-width bins from first to last call. Empty bins remain with rate zero. Occupied bins get a confidence-weighted mean in PC space; that sequence is the trajectory.",
+        ],
+        math: [...MATH.bin, ...MATH.centroid],
+      },
+      {
+        title: "Change-points and HMM",
+        body: [
+          "PELT splits the binned series when segment cost plus penalty $\\beta|\\tau|$ is cheaper than one long segment. Two HMMs label regimes: one on embedding centroids, one on activity $(r_b,R_b,\\bar{c}_b)$.",
+        ],
+        math: [...MATH.peltBoth, ...MATH.hmm],
+      },
+    ],
     walk_label: "pipeline",
     keys: "Left and right arrows change the step. The drawing on the left is a cartoon. It is not the PNG Colab exports.",
     prev: "prev",
     next: "next",
     fig_label: "reports/",
     fig_h: "Output figures",
-    fig_note: "Demo uses 15 s bins on the bacpipe test wav (~1 min, 22 BirdNET detections, five occupied bins). Route A and Route B site bundles only include PCA and UMAP (default 60 s bins on that clip).",
+    fig_note: "Demo uses $\\Delta t=15\\,\\mathrm{s}$ bins on the bacpipe test wav ($\\sim 1\\,\\mathrm{min}$, $n=22$ detections, five occupied bins). Route A and Route B site bundles only include PCA and UMAP (default $\\Delta t=60\\,\\mathrm{s}$ on that clip).",
     fig_missing: "This PNG is not in the site bundle. Colab still writes it on Run all.",
     runs: [
       { id: "demo", label: "Demo" },
@@ -59,53 +145,78 @@ const COPY = {
         chip: "detections",
         file: "JSONL manifest",
         title: "One JSON line per detection",
-        body: "Each line has start_s, species, confidence, and an optional embedding. The demo runs BMZ BirdNET on the bacpipe bundled test wav (~1 min). Empty bins stay on the timeline as rate 0.",
+        body: [
+          "Each line is one BirdNET window: $\\mathrm{start\\_s}$, $\\text{species}$, $c_i$, and optionally $\\mathbf{x}_i$.",
+          "The demo runs BMZ BirdNET on the bacpipe bundled test wav ($\\sim 1\\,\\mathrm{min}$, $n=22$ in the site bundle). You can swap in your own wav or an existing manifest.",
+        ],
+        math: MATH.manifest,
       },
       {
         chip: "vectors",
         file: "BirdNET or demo mapper",
         title: "Where the 1024-d numbers come from",
-        body: "Route A (bacpipe) and Route B (BMZ) attach BirdNET embeddings. Pass --make-sample only if you want a synthetic JSONL for offline testing. Mixing real vectors with missing ones is an error.",
+        body: [
+          "Route A (bacpipe) and Route B (bioacoustics-model-zoo) call BirdNET and write $\\mathbf{x}_i$ into the manifest. Each vector summarizes the sound in that window, not the whole file.",
+          "Pass --make-sample only for offline testing with synthetic $128$-d vectors. Mixing real embeddings with missing ones on the same run is an error.",
+        ],
+        math: MATH.embedding,
       },
       {
         chip: "geometry",
         file: "pca_species.png and umap_species.png",
         title: "PCA and UMAP",
-        body: "Same detections, two maps. PCA is linear. UMAP pulls nearby points into islands. Color is species. The axis numbers are not Hertz or meters. Demo blobs look tidy because the prototypes were written in. BirdNET clouds usually look messier.",
-        math: MATH.pca,
+        body: [
+          "Same detections, two 2D views. Points are colored by species. Axes are abstract coordinates, not seconds or kHz.",
+          "PCA is linear and fast to read: do species separate along $\\mathrm{PC1}$? UMAP stresses local neighborhoods; clusters can look tighter but distances are not comparable to PCA.",
+          "summary.json reports intra- vs inter-species cosine distance $d_{\\cos}$ as a coarse separation check.",
+        ],
+        math: [...MATH.scale, ...MATH.pca, ...MATH.umap, ...MATH.cosine],
       },
       {
         chip: "trajectory",
         file: "trajectory_pca.png",
-        title: "Centroid of each minute",
-        body: "Calls go into time bins (15 s in the demo notebook, 60 s by default). The bin mean is weighted by confidence, so weak detections pull less. The plot is that mean in PC1 and PC2. Color is the embedding HMM state. Arrows still follow time.",
-        math: MATH.centroid,
+        title: "Centroid through time",
+        body: [
+          "Detections are assigned to bins of width $\\texttt{bin\\_s}$ ($\\Delta t=15\\,\\mathrm{s}$ in the demo notebook, $60\\,\\mathrm{s}$ by default). The confidence-weighted centroid $\\mathbf{c}_b$ in PC space is one point per occupied bin; arrows follow time.",
+          "$\\bar{c}_b$ in each bin is an ordinary average, not weighted. Need several occupied bins before the path is more than a short segment.",
+        ],
+        math: [...MATH.bin, ...MATH.centroid],
       },
       {
         chip: "breaks",
         file: "changepoints.png and trajectory_changepoints.png",
         title: "Change-points on rate and on PC1",
-        body: "PELT on detection rate (empty bins count as 0) finds when calling gets busier or quieter. PELT on PC1 finds when the average vector jumps. A red line on the rate plot only means more or fewer calls. Rate uses \u03b2 = 3, PC1 uses \u03b2 = 2.5.",
+        body: [
+          "PELT (pruned exact linear time) searches break locations that minimize segment cost plus $\\beta|\\tau|$.",
+          "On detection rate $r_b$, breaks mean calling got busier or quieter (empty bins count as zero). On $c_b^{(1)}$, breaks mean the average embedding shifted. Defaults: $\\beta=3$ for rate, $\\beta=2.5$ for $\\mathrm{PC1}$.",
+        ],
         math: [...MATH.rate, ...MATH.peltBoth],
       },
       {
         chip: "HMM",
         file: "hmm_regimes.png",
         title: "Two HMMs",
-        body: "The upper row is fit on PC1/PC2 centroids, so the states live in embedding space. The lower row is fit on call rate, species count, and mean confidence. Features are standardized first. 0, 1, and 2 are just labels.",
+        body: [
+          "A diagonal Gaussian HMM assigns each bin a hidden state $s_t$. Transitions are Markov; emissions are Gaussian in the chosen features.",
+          "Top row: states on $(c_b^{(1)},c_b^{(2)})$ centroids (embedding regimes). Bottom row: states on standardized $(r_b,R_b,\\bar{c}_b)$. State IDs $0,1,2$ are arbitrary labels.",
+          "$N_{\\mathrm{sw}}$ in summary.json counts how often the embedding HMM switches state along the timeline.",
+        ],
         math: MATH.hmm,
       },
       {
         chip: "shuffle",
         file: "shuffle_null.png",
         title: "Shuffle start_s",
-        body: "Only the times are permuted. Species and embeddings stay on the same rows. If the PC1 breaks and HMM flips depended on order, the shuffled side should look noisier. Compare hmm_n_switches with shuffle_hmm_n_switches in summary.json. The fit still uses a fixed number of states, so the right-hand HMM will not go flat.",
+        body: [
+          "Only $\\mathrm{start\\_s}$ is permuted; species and $\\mathbf{x}_i$ stay on the same rows. Timeline order is destroyed while the point cloud is unchanged.",
+          "If changepoints and HMM switches mostly track real temporal structure, the shuffled run should show fewer switches or messier breaks. Compare $N_{\\mathrm{sw}}$ with shuffle $N_{\\mathrm{sw}}$.",
+        ],
         math: MATH.shuffle,
       },
     ],
     nbs: [
-      { name: "Demo", meta: "CPU, about 5-10 min. BMZ BirdNET on the bacpipe test wav, 15 s bins.", href: COLAB.demo },
-      { name: "Route B", meta: "CPU, about 5-10 min. BMZ BirdNET, 1024-d. Uses bacpipe test wav if /content/audio is empty.", href: COLAB.b },
+      { name: "Demo", meta: "CPU, about 5-10 min. BMZ BirdNET on the bacpipe test wav, $\\Delta t=15\\,\\mathrm{s}$ bins.", href: COLAB.demo },
+      { name: "Route B", meta: "CPU, about 5-10 min. BMZ BirdNET, $1024$-d. Uses bacpipe test wav if /content/audio is empty.", href: COLAB.b },
       { name: "Route A", meta: "T4 if you have one. bacpipe BirdNET on the bundled test wavs. The first run downloads weights.", href: COLAB.a },
     ],
 };
@@ -198,13 +309,69 @@ function generate() {
 }
 
 const FIG_DEFS = [
-  { id: "pca_species.png", title: "species in PCA", body: "One point per detection. Color is species. Axes are the first two principal components of the scaled embedding. Useful if you want to see whether species sit apart. The tick labels are not physical units.", math: MATH.pca },
-  { id: "umap_species.png", title: "species in UMAP", body: "Same points, nonlinear map. Handy if PCA is a blob but local groups still exist. A distance on this plot is not a PCA distance." },
-  { id: "trajectory_pca.png", title: "minute centroids", body: "Each marker is one minute's confidence-weighted centroid in PC space. Color is HMM state. Needs many occupied bins over a long recording; two points is just a line.", math: MATH.centroid },
-  { id: "changepoints.png", title: "call rate", body: "Call rate against minutes, with empty bins at 0. Red dashed lines in the Colab PNG are PELT breaks in how often animals called.", math: [...MATH.rate, ...MATH.peltRate] },
-  { id: "trajectory_changepoints.png", title: "centroid PC1", body: "PC1 of the centroid against minutes. Breaks here are shifts in the average vector. Put changepoints.png next to it.", math: MATH.peltPc1 },
-  { id: "hmm_regimes.png", title: "two HMMs", body: "Top: HMM on embedding centroids. Bottom: HMM on activity stats. They do not have to agree.", math: MATH.hmm },
-  { id: "shuffle_null.png", title: "shuffle times", body: "Original times on the left, shuffled start_s on the right. The test is whether the ordered structure survives the permutation.", math: MATH.shuffle },
+  {
+    id: "pca_species.png",
+    title: "species in PCA",
+    body: [
+      "One point per detection after column scaling ($\\tilde{\\mathbf{x}}_i$). Color is species label from BirdNET.",
+      "$\\mathrm{PC1}$ and $\\mathrm{PC2}$ are the leading variance directions. Use this plot to see overlap between species clouds, not absolute timbre units.",
+    ],
+    math: [...MATH.scale, ...MATH.pca, ...MATH.cosine],
+  },
+  {
+    id: "umap_species.png",
+    title: "species in UMAP",
+    body: [
+      "Same scaled embeddings, mapped with UMAP ($n_{\\mathrm{neighbors}}=15$ by default). Good for local structure; bad for reading absolute distances.",
+      "If $n$ detections is below four, the code falls back to PCA for stability.",
+    ],
+    math: MATH.umap,
+  },
+  {
+    id: "trajectory_pca.png",
+    title: "binned centroids",
+    body: [
+      "Each marker is one bin's confidence-weighted centroid $\\mathbf{c}_b$ in PC space. Color is the embedding HMM state $s_t$. The polyline follows bin order.",
+      "Demo: five occupied bins on $\\sim 1\\,\\mathrm{min}$ audio with $\\texttt{bin\\_s}=15\\,\\mathrm{s}$. With only two bins (default $\\Delta t=60\\,\\mathrm{s}$ on a short clip) the path collapses to a line.",
+    ],
+    math: [...MATH.bin, ...MATH.centroid],
+  },
+  {
+    id: "changepoints.png",
+    title: "call rate",
+    body: [
+      "$r_b=n_b/\\Delta t$ on the full bin grid, including empty bins at zero.",
+      "Red dashed lines are PELT breaks ($\\beta=3$): segments where calling intensity changes.",
+    ],
+    math: [...MATH.rate, ...MATH.peltRate],
+  },
+  {
+    id: "trajectory_changepoints.png",
+    title: "centroid PC1",
+    body: [
+      "$c_b^{(1)}$ of the binned centroid versus time. Breaks ($\\beta=2.5$) mark jumps in the average embedding, not changes in call count.",
+      "Read alongside changepoints.png: $r_b$ can spike while $\\mathbf{c}_b$ stays put, or the reverse.",
+    ],
+    math: [...MATH.centroid, ...MATH.peltPc1],
+  },
+  {
+    id: "hmm_regimes.png",
+    title: "two HMMs",
+    body: [
+      "Top: hidden states $s_t$ on embedding centroids $(c_b^{(1)},c_b^{(2)})$. Bottom: states on activity features after standardization.",
+      "Regimes need not match: loud mixed-species calling and a pure embedding shift are different signals.",
+    ],
+    math: MATH.hmm,
+  },
+  {
+    id: "shuffle_null.png",
+    title: "shuffle times",
+    body: [
+      "Left: original timeline. Right: $\\mathrm{start\\_s}$ permuted, same $\\mathbf{x}_i$. Compare changepoint counts and $N_{\\mathrm{sw}}$ in summary.json.",
+      "Large drops on the shuffled side suggest the original ordering carried real structure.",
+    ],
+    math: MATH.shuffle,
+  },
 ];
 
 const RUN_FIG_IDS = {
@@ -289,14 +456,24 @@ function draw() {
   const gold = cssColor("var-gold");
   const stateCol = [nacht, gold, rubric];
 
-  ctx.font = "11px Manrope, system-ui, sans-serif";
-  ctx.fillStyle = faint;
-  if (step <= 2) {
-    ctx.fillText("PC2", 8, 18);
-    ctx.fillText("PC1", w - 36, plotH + 8);
+  function setVizLabels(show, yTex, xTex) {
+    const vizLabels = document.getElementById("viz-labels");
+    const yEl = document.getElementById("viz-label-y");
+    const xEl = document.getElementById("viz-label-x");
+    if (!vizLabels || !yEl || !xEl) return;
+    vizLabels.hidden = !show;
+    yEl.hidden = !yTex;
+    xEl.hidden = !xTex;
+    yEl.replaceChildren();
+    xEl.replaceChildren();
+    if (yTex) renderInline(yEl, yTex);
+    if (xTex) renderInline(xEl, xTex);
   }
 
+  setVizLabels(false, null, null);
+
   if (step === 0) {
+    setVizLabels(true, "\\mathrm{PC2}", "\\mathrm{PC1}");
     DATA.points.forEach((p) => {
       ctx.globalAlpha = 0.22;
       ctx.fillStyle = cssColor(SPECIES_COLOR[p.sp]);
@@ -310,6 +487,7 @@ function draw() {
   }
 
   if (step === 1) {
+    setVizLabels(true, null, "t");
     DATA.points.forEach((p) => {
       ctx.fillStyle = cssColor(SPECIES_COLOR[p.sp]);
       ctx.globalAlpha = 0.85;
@@ -317,13 +495,14 @@ function draw() {
     });
     ctx.globalAlpha = 1;
     ctx.fillStyle = faint;
-    ctx.fillText("t", w - 24, 210);
     ["0", "1", "2"].forEach((r, i) => {
       ctx.fillStyle = faint;
       ctx.fillText(`regime ${r}`, pad, 36 + i * 70);
     });
     return;
   }
+
+  if (step === 2) setVizLabels(true, "\\mathrm{PC2}", "\\mathrm{PC1}");
 
   DATA.points.forEach((p) => {
     ctx.globalAlpha = step >= 3 ? 0.22 : 0.8;
@@ -373,7 +552,9 @@ function draw() {
       ctx.setLineDash([]);
     });
     ctx.fillStyle = faint;
+    ctx.font = "11px Manrope, system-ui, sans-serif";
     ctx.fillText("calls per bin, empty bins included", pad, h - 8);
+    setVizLabels(true, "r_b", "t");
   }
 }
 
@@ -392,12 +573,87 @@ function renderMath(el, latexList) {
   el.hidden = false;
 }
 
+function renderInline(el, tex) {
+  if (!el || typeof katex === "undefined") return;
+  el.replaceChildren();
+  katex.render(tex, el, { displayMode: false, throwOnError: false });
+}
+
+function appendInlineMath(parent, text) {
+  if (!text) return;
+  if (typeof katex === "undefined") {
+    parent.appendChild(document.createTextNode(text));
+    return;
+  }
+  const re = /\$([^$]+)\$/g;
+  let last = 0;
+  let match;
+  while ((match = re.exec(text)) !== null) {
+    if (match.index > last) {
+      parent.appendChild(document.createTextNode(text.slice(last, match.index)));
+    }
+    const span = document.createElement("span");
+    span.className = "math-inline";
+    katex.render(match[1], span, { displayMode: false, throwOnError: false });
+    parent.appendChild(span);
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) {
+    parent.appendChild(document.createTextNode(text.slice(last)));
+  }
+}
+
+function setRichText(el, text) {
+  if (!el) return;
+  el.replaceChildren();
+  appendInlineMath(el, text);
+}
+
+function setParagraphs(el, body) {
+  if (!el) return;
+  el.replaceChildren();
+  const parts = Array.isArray(body) ? body : body ? [body] : [];
+  parts.forEach((text) => {
+    const p = document.createElement("p");
+    appendInlineMath(p, text);
+    el.appendChild(p);
+  });
+}
+
+function renderConcepts() {
+  const grid = document.getElementById("concept-grid");
+  if (!grid) return;
+  grid.replaceChildren();
+  COPY.concepts.forEach((item) => {
+    const card = document.createElement("article");
+    card.className = "concept-card";
+    const h = document.createElement("h3");
+    h.textContent = item.title;
+    card.appendChild(h);
+    item.body.forEach((text) => {
+      const p = document.createElement("p");
+      appendInlineMath(p, text);
+      card.appendChild(p);
+    });
+    if (item.math && item.math.length) {
+      const math = document.createElement("div");
+      math.className = "math-block";
+      renderMath(math, item.math);
+      card.appendChild(math);
+    }
+    grid.appendChild(card);
+  });
+}
+
 function renderCopy() {
   const c = COPY;
   document.querySelectorAll("[data-i]").forEach((el) => {
     const key = el.getAttribute("data-i");
-    if (typeof c[key] === "string") el.textContent = c[key];
+    if (typeof c[key] === "string") setRichText(el, c[key]);
   });
+  setParagraphs(document.getElementById("ask-body"), c.ask_p);
+  renderMath(document.getElementById("ask-math"), c.ask_math);
+  renderConcepts();
   document.getElementById("prev-btn").textContent = c.prev;
   document.getElementById("next-btn").textContent = c.next;
 
@@ -415,7 +671,7 @@ function renderCopy() {
   const s = c.steps[step];
   document.getElementById("step-file").textContent = s.file;
   document.getElementById("step-title").textContent = s.title;
-  document.getElementById("step-body").textContent = s.body;
+  setParagraphs(document.getElementById("step-body"), s.body);
   renderMath(document.getElementById("step-math"), s.math);
 
   const runChips = document.getElementById("run-chips");
@@ -450,7 +706,8 @@ function renderCopy() {
     if (i === figIdx) {
       const body = document.createElement("span");
       body.className = "fig-item-body";
-      body.textContent = f.body;
+      const parts = Array.isArray(f.body) ? f.body : [f.body];
+      appendInlineMath(body, parts.join(" "));
       b.appendChild(body);
     }
     b.addEventListener("click", () => {
@@ -462,7 +719,7 @@ function renderCopy() {
 
   const chosen = figs[figIdx];
   document.getElementById("fig-file").textContent = chosen.id;
-  document.getElementById("fig-body").textContent = chosen.body;
+  setParagraphs(document.getElementById("fig-body"), chosen.body);
   renderMath(document.getElementById("fig-math"), chosen.math);
 
   const img = document.getElementById("fig-img");
@@ -478,7 +735,14 @@ function renderCopy() {
   c.nbs.forEach((n) => {
     const row = document.createElement("div");
     row.className = "nb-row";
-    row.innerHTML = `<span class="nb-name">${n.name}</span><span class="nb-meta">${n.meta}</span>`;
+    const name = document.createElement("span");
+    name.className = "nb-name";
+    name.textContent = n.name;
+    const meta = document.createElement("span");
+    meta.className = "nb-meta";
+    appendInlineMath(meta, n.meta);
+    row.appendChild(name);
+    row.appendChild(meta);
     const a = document.createElement("a");
     a.className = "lite-chip-btn";
     a.href = n.href;

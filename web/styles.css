@@ -276,6 +276,36 @@ p:last-child {
   position: relative;
 }
 
+.viz-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.viz-label {
+  position: absolute;
+  font-size: 0.72rem;
+  color: var(--fg-dim);
+}
+
+.viz-label-y {
+  top: 0.35rem;
+  left: 0.45rem;
+}
+
+.viz-label-x {
+  right: 0.55rem;
+  bottom: 0.35rem;
+}
+
+.math-inline .katex {
+  font-size: 1em;
+}
+
+.math-inline .katex .mathnormal {
+  font-family: KaTeX_Main, Times New Roman, serif;
+}
+
 canvas {
   display: block;
   width: 100%;
@@ -387,6 +417,37 @@ canvas {
 
 .figure-frame.is-empty {
   display: none;
+}
+
+.concept-grid {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 0.85rem;
+}
+
+.concept-card {
+  padding: 0.75rem 0.85rem;
+  background: color-mix(in srgb, var(--fg) 3.5%, transparent);
+}
+
+.concept-card h3 {
+  margin-bottom: 0.35rem;
+}
+
+.concept-card p {
+  font-size: 0.92rem;
+  color: var(--fg-second);
+  margin-bottom: 0.45rem;
+}
+
+.concept-card p:last-of-type {
+  margin-bottom: 0;
+}
+
+.copy-pane p,
+.figure-caption p,
+#ask-body p {
+  color: var(--fg-second);
 }
 
 .math-block {
