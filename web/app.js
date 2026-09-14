@@ -21,7 +21,7 @@ const MATH = {
   ],
   pca: [
     String.raw`\mathbf{z}_i=W_{:2}^{\top}\tilde{\mathbf{x}}_i,\quad W\in\mathbb{R}^{D\times 2}`,
-    String.raw`\mathrm{PC1},\mathrm{PC2}=\arg\max\text{ variance directions of } \{\tilde{\mathbf{x}}_i\}`,
+    String.raw`\mathrm{PC1},\mathrm{PC2}=\operatorname*{arg\,max}\text{ variance of }\{\tilde{\mathbf{x}}_i\}`,
   ],
   umap: [
     String.raw`\mathbf{u}_i=\mathrm{UMAP}(\tilde{\mathbf{x}}_i)\in\mathbb{R}^2,\quad n_{\mathrm{neighbors}}=15`,
@@ -714,30 +714,56 @@ function draw() {
   }
 }
 
+function katexReady() {
+  return typeof katex !== "undefined" && typeof katex.render === "function";
+}
+
 function renderMath(el, latexList) {
   if (!el) return;
   el.replaceChildren();
-  if (!latexList || !latexList.length || typeof katex === "undefined") {
+  if (!latexList || !latexList.length) {
     el.hidden = true;
+    return;
+  }
+  if (!katexReady()) {
+    latexList.forEach((tex) => {
+      const pre = document.createElement("pre");
+      pre.className = "math-fallback";
+      pre.textContent = tex;
+      el.appendChild(pre);
+    });
+    el.hidden = false;
     return;
   }
   latexList.forEach((tex) => {
     const line = document.createElement("div");
-    katex.render(tex, line, { displayMode: true, throwOnError: false });
+    try {
+      katex.render(tex, line, { displayMode: true, throwOnError: false, strict: "ignore" });
+    } catch {
+      line.textContent = tex;
+    }
     el.appendChild(line);
   });
   el.hidden = false;
 }
 
 function renderInline(el, tex) {
-  if (!el || typeof katex === "undefined") return;
+  if (!el || !tex) return;
   el.replaceChildren();
-  katex.render(tex, el, { displayMode: false, throwOnError: false });
+  if (!katexReady()) {
+    el.textContent = tex;
+    return;
+  }
+  try {
+    katex.render(tex, el, { displayMode: false, throwOnError: false, strict: "ignore" });
+  } catch {
+    el.textContent = tex;
+  }
 }
 
 function appendInlineMath(parent, text) {
   if (!text) return;
-  if (typeof katex === "undefined") {
+  if (!katexReady()) {
     parent.appendChild(document.createTextNode(text));
     return;
   }
@@ -750,7 +776,11 @@ function appendInlineMath(parent, text) {
     }
     const span = document.createElement("span");
     span.className = "math-inline";
-    katex.render(match[1], span, { displayMode: false, throwOnError: false });
+    try {
+      katex.render(match[1], span, { displayMode: false, throwOnError: false, strict: "ignore" });
+    } catch {
+      span.textContent = match[1];
+    }
     parent.appendChild(span);
     last = match.index + match[0].length;
   }
@@ -957,6 +987,14 @@ window.addEventListener("keydown", (e) => {
   if (e.key === "ArrowLeft") setStep(step - 1);
 });
 
-renderCopy();
-draw();
+function boot() {
+  renderCopy();
+  draw();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", boot);
+} else {
+  boot();
+}
 window.addEventListener("resize", draw);

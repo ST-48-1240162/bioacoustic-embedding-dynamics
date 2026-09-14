@@ -472,6 +472,17 @@ canvas {
   display: none;
 }
 
+.math-fallback {
+  margin: 0.35em 0;
+  padding: 0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.82em;
+  white-space: pre-wrap;
+  color: var(--fg-second);
+  background: transparent;
+  border: none;
+}
+
 .math-block .katex {
   font-size: 1.02em;
 }
