@@ -139,8 +139,8 @@ const COPY = {
     step_fig_gap: "The figure for this pipeline step is only bundled under Demo ($\\Delta t=15\\,\\mathrm{s}$). Route A/B site PNGs stop at PCA and UMAP.",
     runs: [
       { id: "demo", label: "Demo" },
-      { id: "bmz", label: "Route B" },
       { id: "bacpipe", label: "Route A" },
+      { id: "bmz", label: "Route B" },
     ],
     nb_label: "notebooks",
     nb_h: "Which notebook",
@@ -220,8 +220,8 @@ const COPY = {
     ],
     nbs: [
       { name: "Demo", meta: "CPU, about 5-10 min. BMZ BirdNET on the bacpipe test wav, $\\Delta t=15\\,\\mathrm{s}$ bins.", href: COLAB.demo },
-      { name: "Route B", meta: "CPU, about 5-10 min. BMZ BirdNET, $1024$-d. Uses bacpipe test wav if /content/audio is empty.", href: COLAB.b },
       { name: "Route A", meta: "T4 if you have one. bacpipe BirdNET on the bundled test wavs. The first run downloads weights.", href: COLAB.a },
+      { name: "Route B", meta: "CPU, about 5-10 min. BMZ BirdNET, $1024$-d. Uses bacpipe test wav if /content/audio is empty.", href: COLAB.b },
     ],
 };
 

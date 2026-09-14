@@ -6,9 +6,7 @@ If a row has no `embedding`, a small PyTorch mapper can fill one (`--make-sample
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ST-48-1240162/bioacoustic-embedding-dynamics/blob/main/docs/Demo_Colab.ipynb)
 
-**Notebook (demo):** [docs/Demo_Colab.ipynb](docs/Demo_Colab.ipynb)
-**Route A (bacpipe, T4):** [docs/Route_A_Bacpipe_Colab.ipynb](docs/Route_A_Bacpipe_Colab.ipynb)
-**Route B (BMZ):** [docs/Route_B_BMZ_Colab.ipynb](docs/Route_B_BMZ_Colab.ipynb)
+**Demo:** [docs/Demo_Colab.ipynb](docs/Demo_Colab.ipynb) · **Route A (bacpipe, T4):** [docs/Route_A_Bacpipe_Colab.ipynb](docs/Route_A_Bacpipe_Colab.ipynb) · **Route B (BMZ):** [docs/Route_B_BMZ_Colab.ipynb](docs/Route_B_BMZ_Colab.ipynb)
 **Walkthrough:** [docs/COLAB.md](docs/COLAB.md)
 **Colab explainer:** https://bioacoustic-embedding-dynamics.vercel.app
 
@@ -17,8 +15,8 @@ If a row has no `embedding`, a small PyTorch mapper can fill one (`--make-sample
 | Step | Where |
 |------|-------|
 | Demo: BMZ BirdNET on bacpipe test wav, 15 s bins | Colab CPU, about 5-10 min |
-| Route B: BMZ BirdNET 1024-d | Colab CPU, about 5-10 min |
 | Route A: bacpipe BirdNET 1024-d | Colab T4, first run downloads weights |
+| Route B: BMZ BirdNET 1024-d | Colab CPU, about 5-10 min |
 
 ## Install
 
